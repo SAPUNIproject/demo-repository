@@ -1,0 +1,37 @@
+[
+  {
+    "timestamp": "2026-03-20 13:56:07",
+    "username": "auth",
+    "action": "Създаде документ: pyrviq dokument"
+  },
+  {
+    "timestamp": "2026-03-20 13:57:10",
+    "username": "auth",
+    "action": "Добави версия v1 към: pyrviq dokument"
+  },
+  {
+    "timestamp": "2026-03-20 13:57:29",
+    "username": "auth",
+    "action": "Изпрати v1 за преглед"
+  },
+  {
+    "timestamp": "2026-03-20 13:58:21",
+    "username": "auth",
+    "action": "Добави версия v2 към: pyrviq dokument"
+  },
+  {
+    "timestamp": "2026-03-20 13:58:46",
+    "username": "auth",
+    "action": "Изпрати v2 за преглед"
+  },
+  {
+    "timestamp": "2026-03-20 14:00:07",
+    "username": "rev",
+    "action": "Одобри v1 в документ abb08de2-6067-4eb8-acb1-6b45b1824e12"
+  },
+  {
+    "timestamp": "2026-03-20 14:00:27",
+    "username": "rev",
+    "action": "Одобри v2 в документ abb08de2-6067-4eb8-acb1-6b45b1824e12"
+  }
+]
