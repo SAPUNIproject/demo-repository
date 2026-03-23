@@ -1,0 +1,26 @@
+[
+  {
+    "id": "815dd42c-5888-41e5-a38c-b842f6b7fc6d",
+    "username": "admin",
+    "password": "admin123",
+    "role": "ADMIN"
+  },
+  {
+    "id": "70610f6f-473b-4de3-a1a1-dfc7b0d5c911",
+    "username": "auth",
+    "password": "auth123",
+    "role": "AUTHOR"
+  },
+  {
+    "id": "585ccca3-8bbc-4a6e-bf11-ee5aa31a82b6",
+    "username": "rev",
+    "password": "rev123",
+    "role": "REVIEWER"
+  },
+  {
+    "id": "d518a5f2-9506-4a64-9e70-d220981cd205",
+    "username": "read",
+    "password": "read123",
+    "role": "READER"
+  }
+]
