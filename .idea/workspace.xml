@@ -4,7 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="39ac77b7-dff9-4419-b116-014439842239" name="Changes" comment="Initial project setup. Add document versioning system." />
+    <list default="true" id="39ac77b7-dff9-4419-b116-014439842239" name="Changes" comment="Initial project setup. Add document versioning system.">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/document-versioning/src/main/java/com/docvcs/gui/MainControler.java" beforeDir="false" afterPath="$PROJECT_DIR$/document-versioning/src/main/java/com/docvcs/gui/MainController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/document-versioning/src/main/java/com/docvcs/gui/MainGUi.java" beforeDir="false" afterPath="$PROJECT_DIR$/document-versioning/src/main/java/com/docvcs/gui/MainGUI.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/document-versioning/src/main/resources/com.docvcs/gui/MainView.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/document-versioning/src/main/resources/com.docvcs/gui/MainView.fxml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -24,6 +29,13 @@
     &quot;assignee&quot;: &quot;Yordan619Nachev&quot;
   }
 }</component>
+  <component name="GithubProjectSettings">
+    <option name="branchProtectionPatterns">
+      <list>
+        <option value="main" />
+      </list>
+    </option>
+  </component>
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/SAPUNIproject/demo-repository.git&quot;,
@@ -41,8 +53,15 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "Application.DocumentClient.executor": "Run",
+    "Application.DocumentServer.executor": "Run",
+    "Application.MainGUI.executor": "Run",
+    "Application.MainGUi.executor": "Run",
+    "Application.run.executor": "Run",
+    "Maven.document-versioning [org.openjfx:javafx-maven-plugin:0.0.8:run].executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "Daancho",
     "junie.onboarding.icon.badge.shown": "true",
@@ -58,6 +77,21 @@
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$" />
     </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="run" type="Application" factoryName="Application">
+      <option name="ALTERNATIVE_JRE_PATH" value="openjdk-25" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+      <envs>
+        <env name="PATH" value="$MAVEN_REPOSITORY$/org/openjfx" />
+      </envs>
+      <option name="MAIN_CLASS_NAME" value="com.docvcs.gui.MainGUI" />
+      <module name="document-versioning" />
+      <option name="PROGRAM_PARAMETERS" value="--add-modules javafx.controls,javafx.fxml" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
@@ -82,7 +116,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774009669146</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Initial project setup. Add document versioning system.">
+      <option name="closed" value="true" />
+      <created>1774659105073</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1774659105073</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
