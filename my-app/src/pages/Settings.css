@@ -1,0 +1,93 @@
+.settings-page {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 40px;
+    color: #e2e8f0;
+}
+
+.settings-card {
+    width: 460px;
+    padding: 28px;
+    border-radius: 18px;
+    background: rgba(0, 15, 137, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+}
+
+.settings-card h2 {
+    margin: 0;
+    font-size: 26px;
+}
+
+.settings-card p {
+    margin-top: 6px;
+    margin-bottom: 20px;
+    color: rgba(226, 232, 240, 0.75);
+}
+
+.settings-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 16px;
+}
+
+.settings-group label {
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: rgba(226, 232, 240, 0.7);
+}
+
+.settings-input {
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    outline: none;
+    background: rgba(255, 255, 255, 0.08);
+    color: #e2e8f0;
+    font-size: 14px;
+}
+
+.settings-input:focus {
+    border-color: rgba(56, 189, 248, 0.7);
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+}
+
+.settings-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #2563eb, #38bdf8);
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.settings-btn:hover {
+    transform: translateY(-2px);
+}
+
+.success-msg {
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    color: #86efac;
+    font-size: 13px;
+}
+
+.admin-settings {
+    margin-top: 24px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.admin-settings h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-size: 18px;
+}
