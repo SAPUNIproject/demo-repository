@@ -1,6 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import { useMemo, useState } from "react";
-import CustomSelect from "../components/CustomSelect";
+import CustomSelect from "../../components/CustomSelect";
 import "./DocumentDetails.css";
 
 export default function DocumentDetails() {

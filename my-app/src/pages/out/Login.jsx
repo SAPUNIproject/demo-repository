@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
 
 export default function Login() {
@@ -9,10 +9,6 @@ export default function Login() {
 
   const nav = useNavigate();
 
-  const passwordRegex =
-    /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};:'"\\|,.<>/?]).{8,}$/;
-
-  // Сложи за създаване на акоунт
   const handleLogin = () => {
     if (!username) {
       setError("Username cannot be empty");
@@ -24,19 +20,11 @@ export default function Login() {
       return;
     }
 
-    if (!passwordRegex.test(password)) {
-      setError(
-        "Password must be at least 8 chars, include uppercase, number and symbol"
-      );
-      return;
-    }
-
     if (username !== "admin" || password !== "Admin@123") {
       setError("Invalid username or password");
       return;
     }
 
-    // 🔥 ВРЕМЕННО (role)
     localStorage.setItem("role", "ADMIN");
 
     setError("");
@@ -54,6 +42,9 @@ export default function Login() {
           <div className="field">
             <input
               className="input"
+              type="text"
+              placeholder=" "
+              value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
             />
@@ -64,6 +55,8 @@ export default function Login() {
             <input
               type="password"
               className="input"
+              placeholder=" "
+              value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
@@ -73,7 +66,13 @@ export default function Login() {
           <button className="loginButton" onClick={handleLogin}>
             Login
           </button>
-          
+
+          <p className="login-footer">
+            Don't have an account? <Link to="/signup">Sign Up</Link>
+          </p>
+          <p className="signup-footer">
+            Do you need <Link to="/help">Help</Link>?
+          </p>
         </div>
       </div>
     </div>

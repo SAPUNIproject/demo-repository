@@ -1,6 +1,6 @@
 import { useState } from "react";
 import "./Settings.css";
-import CustomSelect from "../components/CustomSelect";
+import CustomSelect from "../../components/CustomSelect";
 
 export default function Settings() {
     const role = localStorage.getItem("role") || "READER";

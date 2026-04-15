@@ -1,5 +1,5 @@
 import { useState } from "react";
-import CustomSelect from "../components/CustomSelect";
+import CustomSelect from "../../components/CustomSelect";
 import "./Users.css";
 
 export default function Users() {
