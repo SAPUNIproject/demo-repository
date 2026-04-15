@@ -1,0 +1,66 @@
+.custom-select {
+    position: relative;
+    width: 100%;
+}
+
+.custom-select-trigger {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    outline: none;
+    background: rgba(0, 15, 137, 0.8);
+    color: #e2e8f0;
+    font-size: 14px;
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.custom-select-trigger.open,
+.custom-select-trigger:focus {
+    border-color: rgba(56, 189, 248, 0.7);
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+}
+
+.custom-select-arrow {
+    transition: transform 0.2s ease;
+}
+
+.custom-select-arrow.rotate {
+    transform: rotate(180deg);
+}
+
+.custom-select-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 12px;
+    background: rgba(0, 15, 137, 0.98);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    z-index: 1000;
+}
+
+.custom-select-option {
+    width: 100%;
+    padding: 12px 14px;
+    background: transparent;
+    border: none;
+    color: #e2e8f0;
+    text-align: left;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.custom-select-option:hover {
+    background: rgba(56, 189, 248, 0.18);
+}
+
+.custom-select-option.selected {
+    background: rgba(56, 189, 248, 0.25);
+}

@@ -1,0 +1,83 @@
+.dashboard h2 {
+  margin-top: 0;
+  font-size: 28px;
+}
+
+.dashboard p {
+  color: rgba(226, 232, 240, 0.85);
+}
+
+.stats {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+
+.card {
+  flex: 1;
+  min-width: 180px;
+  padding: 20px;
+  border-radius: 14px;
+  background: rgba(0, 15, 137, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.card h3 {
+  margin-top: 0;
+}
+
+.card p {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 0;
+  color: #fff;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin: 24px 0;
+}
+
+.btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #2563eb, #38bdf8);
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+.btn.secondary {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.panel {
+  padding: 20px;
+  border-radius: 14px;
+  background: rgba(0, 15, 137, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.panel h3 {
+  margin-top: 0;
+}
+
+.panel ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.panel li {
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
