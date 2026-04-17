@@ -16,7 +16,7 @@ public class DocumentService {
     public DocumentService(JsonStorage storage) {
         this.storage = storage;
         this.documents = storage.loadDocuments();
-        this.auditLog  = storage.loadAuditLog();
+        this.auditLog = storage.loadAuditLog();
     }
 
     // Създай нов документ (само AUTHOR или ADMIN)
@@ -24,12 +24,29 @@ public class DocumentService {
         if (author.getRole() != Role.AUTHOR && author.getRole() != Role.ADMIN) {
             throw new AuthException("Само автор може да създава документи");
         }
-        Document doc = new Document(UUID.randomUUID().toString(),
-                title, author.getUsername());
+
+        Document doc = new Document(
+                UUID.randomUUID().toString(),
+                title,
+                author.getUsername()
+        );
+
         documents.add(doc);
         storage.saveDocuments(documents);
+
         log(author.getUsername(), "Създаде документ: " + title);
+
         return doc;
+    }
+
+    // Старият метод - оставяме го, за да не гърми ClientHandler
+    public List<Document> getAllDocuments() {
+        return documents;
+    }
+
+    // Нов метод за REST API
+    public List<Document> getAllDocuments(User requester) {
+        return documents;
     }
 
     // Добави нова версия към документ
@@ -37,16 +54,23 @@ public class DocumentService {
         if (author.getRole() != Role.AUTHOR && author.getRole() != Role.ADMIN) {
             throw new AuthException("Само автор може да добавя версии");
         }
+
         Document doc = findDocumentById(docId);
         int nextNumber = doc.getVersions().size() + 1;
+
         Version version = new Version(
                 UUID.randomUUID().toString(),
-                nextNumber, content,
-                author.getId(), author.getUsername());
+                nextNumber,
+                content,
+                author.getId(),
+                author.getUsername()
+        );
+
         doc.addVersion(version);
         storage.saveDocuments(documents);
-        log(author.getUsername(), "Добави версия v" + nextNumber
-                + " към: " + doc.getTitle());
+
+        log(author.getUsername(), "Добави версия v" + nextNumber + " към: " + doc.getTitle());
+
         return version;
     }
 
@@ -55,58 +79,67 @@ public class DocumentService {
         if (author.getRole() != Role.AUTHOR && author.getRole() != Role.ADMIN) {
             throw new AuthException("Само автор може да изпраща за преглед");
         }
+
         Version version = findVersion(docId, versionNumber);
+
         if (version.getStatus() != VersionStatus.DRAFT) {
             throw new DocumentException("Само чернови могат да се изпращат за преглед");
         }
+
         version.setStatus(VersionStatus.PENDING_REVIEW);
         storage.saveDocuments(documents);
+
         log(author.getUsername(), "Изпрати v" + versionNumber + " за преглед");
     }
 
     // Одобри версия (само REVIEWER или ADMIN)
-    public void approveVersion(String docId, int versionNumber,
-                               String comment, User reviewer) {
+    public void approveVersion(String docId, int versionNumber, String comment, User reviewer) {
         if (reviewer.getRole() != Role.REVIEWER && reviewer.getRole() != Role.ADMIN) {
             throw new AuthException("Само рецензент може да одобрява версии");
         }
+
         Version version = findVersion(docId, versionNumber);
+
         if (version.getStatus() != VersionStatus.PENDING_REVIEW) {
             throw new DocumentException("Версията не е изпратена за преглед");
         }
+
         version.setStatus(VersionStatus.APPROVED);
         version.setReviewComment(comment);
         storage.saveDocuments(documents);
-        log(reviewer.getUsername(), "Одобри v" + versionNumber
-                + " в документ " + docId);
+
+        log(reviewer.getUsername(), "Одобри v" + versionNumber + " в документ " + docId);
     }
 
-    // Отхвърли версия (само REVIEWER или ADMIN)
-    public void rejectVersion(String docId, int versionNumber,
-                              String comment, User reviewer) {
+    // Отхвърли версия
+    public void rejectVersion(String docId, int versionNumber, String comment, User reviewer) {
         if (reviewer.getRole() != Role.REVIEWER && reviewer.getRole() != Role.ADMIN) {
             throw new AuthException("Само рецензент може да отхвърля версии");
         }
+
         Version version = findVersion(docId, versionNumber);
+
         if (version.getStatus() != VersionStatus.PENDING_REVIEW) {
             throw new DocumentException("Версията не е изпратена за преглед");
         }
+
         version.setStatus(VersionStatus.REJECTED);
         version.setReviewComment(comment);
         storage.saveDocuments(documents);
-        log(reviewer.getUsername(), "Отхвърли v" + versionNumber
-                + " в документ " + docId);
+
+        log(reviewer.getUsername(), "Отхвърли v" + versionNumber + " в документ " + docId);
     }
 
-    // Вземи историята на версиите
+    // История
     public List<Version> getHistory(String docId) {
         return findDocumentById(docId).getVersions();
     }
 
-    // Сравни две версии — показва разлики ред по ред
+    // Diff
     public String diffVersions(String docId, int v1num, int v2num) {
         Version v1 = findVersion(docId, v1num);
         Version v2 = findVersion(docId, v2num);
+
         String[] lines1 = v1.getContent().split("\n");
         String[] lines2 = v2.getContent().split("\n");
 
@@ -115,9 +148,11 @@ public class DocumentService {
         sb.append("+++ v").append(v2num).append("\n\n");
 
         int max = Math.max(lines1.length, lines2.length);
+
         for (int i = 0; i < max; i++) {
             String l1 = i < lines1.length ? lines1[i] : "";
             String l2 = i < lines2.length ? lines2[i] : "";
+
             if (!l1.equals(l2)) {
                 if (!l1.isEmpty()) sb.append("- ").append(l1).append("\n");
                 if (!l2.isEmpty()) sb.append("+ ").append(l2).append("\n");
@@ -125,30 +160,26 @@ public class DocumentService {
                 sb.append("  ").append(l1).append("\n");
             }
         }
+
         return sb.toString();
     }
-
-    public List<Document> getAllDocuments() {
-        return documents;
-    }
-
-    // ---- Помощни методи ----
 
     private Document findDocumentById(String docId) {
         return documents.stream()
                 .filter(d -> d.getId().equals(docId))
                 .findFirst()
-                .orElseThrow(() -> new DocumentException(
-                        "Документ с ID '" + docId + "' не е намерен"));
+                .orElseThrow(() ->
+                        new DocumentException("Документ с ID '" + docId + "' не е намерен"));
     }
 
     private Version findVersion(String docId, int versionNumber) {
         Document doc = findDocumentById(docId);
+
         return doc.getVersions().stream()
                 .filter(v -> v.getVersionNumber() == versionNumber)
                 .findFirst()
-                .orElseThrow(() -> new DocumentException(
-                        "Версия v" + versionNumber + " не е намерена"));
+                .orElseThrow(() ->
+                        new DocumentException("Версия v" + versionNumber + " не е намерена"));
     }
 
     private void log(String username, String action) {
@@ -165,6 +196,6 @@ public class DocumentService {
 
     public void reload() {
         this.documents = storage.loadDocuments();
-        this.auditLog  = storage.loadAuditLog();
+        this.auditLog = storage.loadAuditLog();
     }
 }

@@ -22,5 +22,11 @@
     "username": "read",
     "password": "read123",
     "role": "READER"
+  },
+  {
+    "id": "30543d17-d3e2-4800-9d6c-6eb282261f75",
+    "username": "admin1",
+    "password": "Admin@123",
+    "role": "ADMIN"
   }
 ]

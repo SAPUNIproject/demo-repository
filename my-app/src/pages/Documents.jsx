@@ -1,70 +1,54 @@
-import { useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "./Documents.css";
 
 export default function Documents() {
   const [search, setSearch] = useState("");
-  const [documents, setDocuments] = useState([
-    {
-      id: 1,
-      title: "Project Spec",
-      description: "Main project specification document",
-      version: "v3",
-      status: "Approved",
-      author: "admin",
-      updatedAt: "2026-04-14",
-    },
-    {
-      id: 2,
-      title: "API Documentation",
-      description: "Backend endpoints and usage notes",
-      version: "v2",
-      status: "Pending Review",
-      author: "author1",
-      updatedAt: "2026-04-13",
-    },
-    {
-      id: 3,
-      title: "Release Notes",
-      description: "Latest release summary",
-      version: "v1",
-      status: "Draft",
-      author: "author1",
-      updatedAt: "2026-04-12",
-    },
-  ]);
-
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [selectedId, setSelectedId] = useState(null);
+  const [documents, setDocuments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [pageError, setPageError] = useState("");
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [createError, setCreateError] = useState("");
 
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editId, setEditId] = useState(null);
-  const [editTitle, setEditTitle] = useState("");
-  const [editDescription, setEditDescription] = useState("");
-  const [editError, setEditError] = useState("");
+  const currentUsername = localStorage.getItem("username") || "";
 
-  const fileInputRef = useRef(null);
+  const loadDocuments = async () => {
+    try {
+      setLoading(true);
+      setPageError("");
 
-  const handleDeleteClick = (id) => {
-    setSelectedId(id);
-    setShowConfirm(true);
+      const response = await fetch(
+        `http://localhost:8080/api/documents?requesterUsername=${encodeURIComponent(currentUsername)}`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setPageError(data.message || "Failed to load documents.");
+        setDocuments([]);
+        return;
+      }
+
+      setDocuments(data);
+    } catch (error) {
+      setPageError("Cannot connect to server.");
+      setDocuments([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const confirmDelete = () => {
-    setDocuments((prev) => prev.filter((doc) => doc.id !== selectedId));
-    setShowConfirm(false);
-    setSelectedId(null);
-  };
-
-  const cancelDelete = () => {
-    setShowConfirm(false);
-    setSelectedId(null);
-  };
+  useEffect(() => {
+    if (currentUsername) {
+      loadDocuments();
+    } else {
+      setLoading(false);
+      setPageError("No logged in user found.");
+    }
+  }, []);
 
   const openCreateModal = () => {
     setShowCreateModal(true);
@@ -78,84 +62,39 @@ export default function Documents() {
     setCreateError("");
   };
 
-  const handleCreateDocument = () => {
+  const handleCreateDocument = async () => {
     if (!newTitle.trim()) {
       setCreateError("Title is required.");
       return;
     }
 
-    const newDocument = {
-      id: Date.now(),
-      title: newTitle.trim(),
-      description: newDescription.trim() || "No description",
-      version: "v1",
-      status: "Draft",
-      author: "admin",
-      updatedAt: new Date().toISOString().split("T")[0],
-    };
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/documents?requesterUsername=${encodeURIComponent(currentUsername)}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: newTitle.trim(),
+            description: newDescription.trim(),
+          }),
+        }
+      );
 
-    setDocuments((prev) => [newDocument, ...prev]);
-    closeCreateModal();
-  };
+      const data = await response.json();
 
-  const openEditModal = (doc) => {
-    setEditId(doc.id);
-    setEditTitle(doc.title);
-    setEditDescription(doc.description);
-    setEditError("");
-    setShowEditModal(true);
-  };
+      if (!response.ok) {
+        setCreateError(data.message || "Failed to create document.");
+        return;
+      }
 
-  const closeEditModal = () => {
-    setShowEditModal(false);
-    setEditId(null);
-    setEditTitle("");
-    setEditDescription("");
-    setEditError("");
-  };
-
-  const handleSaveEdit = () => {
-    if (!editTitle.trim()) {
-      setEditError("Title is required.");
-      return;
+      closeCreateModal();
+      loadDocuments();
+    } catch (error) {
+      setCreateError("Cannot connect to server.");
     }
-
-    setDocuments((prev) =>
-      prev.map((doc) =>
-        doc.id === editId
-          ? {
-            ...doc,
-            title: editTitle.trim(),
-            description: editDescription.trim() || "No description",
-            updatedAt: new Date().toISOString().split("T")[0],
-          }
-          : doc
-      )
-    );
-
-    closeEditModal();
-  };
-
-  const handleUploadClick = () => {
-    fileInputRef.current.click();
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-
-    if (!file) return;
-
-    const newDocument = {
-      id: Date.now(),
-      title: file.name,
-      description: "Uploaded document",
-      version: "v1",
-      status: "Draft",
-      author: "admin",
-      updatedAt: new Date().toISOString().split("T")[0],
-    };
-
-    setDocuments((prev) => [newDocument, ...prev]);
   };
 
   const filteredDocuments = documents.filter((doc) =>
@@ -171,19 +110,9 @@ export default function Documents() {
         </div>
 
         <div className="documents-actions">
-          <button className="btn" onClick={handleUploadClick}>
-            Upload Document
-          </button>
           <button className="btn secondary" onClick={openCreateModal}>
             Create Document
           </button>
-
-          <input
-            type="file"
-            ref={fileInputRef}
-            className="hidden-input"
-            onChange={handleFileChange}
-          />
         </div>
       </div>
 
@@ -196,6 +125,8 @@ export default function Documents() {
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
+
+      {pageError && <div className="create-error">{pageError}</div>}
 
       <div className="documents-table-wrapper">
         <table className="documents-table">
@@ -212,7 +143,13 @@ export default function Documents() {
           </thead>
 
           <tbody>
-            {filteredDocuments.length > 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan="7" className="empty-row">
+                  Loading documents...
+                </td>
+              </tr>
+            ) : filteredDocuments.length > 0 ? (
               filteredDocuments.map((doc) => (
                 <tr key={doc.id}>
                   <td>{doc.title}</td>
@@ -220,9 +157,7 @@ export default function Documents() {
                   <td>{doc.version}</td>
                   <td>
                     <span
-                      className={`status-badge ${doc.status
-                        .toLowerCase()
-                        .replace(" ", "-")}`}
+                      className={`status-badge ${doc.status.toLowerCase().replaceAll("_", "-")}`}
                     >
                       {doc.status}
                     </span>
@@ -237,18 +172,6 @@ export default function Documents() {
                       >
                         View
                       </Link>
-                      <button
-                        className="small-btn"
-                        onClick={() => openEditModal(doc)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="small-btn delete"
-                        onClick={() => handleDeleteClick(doc.id)}
-                      >
-                        Delete
-                      </button>
                     </div>
                   </td>
                 </tr>
@@ -263,24 +186,6 @@ export default function Documents() {
           </tbody>
         </table>
       </div>
-
-      {showConfirm && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h3>Delete Document</h3>
-            <p>Are you sure you want to delete this document?</p>
-
-            <div className="modal-actions">
-              <button className="btn secondary" onClick={cancelDelete}>
-                Cancel
-              </button>
-              <button className="btn danger" onClick={confirmDelete}>
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showCreateModal && (
         <div className="modal-overlay">
@@ -311,41 +216,6 @@ export default function Documents() {
               </button>
               <button className="btn" onClick={handleCreateDocument}>
                 Create
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showEditModal && (
-        <div className="modal-overlay">
-          <div className="modal create-modal">
-            <h3>Edit Document</h3>
-            <p>Update document information.</p>
-
-            {editError && <div className="create-error">{editError}</div>}
-
-            <input
-              type="text"
-              className="modal-input"
-              placeholder="Document title"
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-            />
-
-            <textarea
-              className="modal-textarea"
-              placeholder="Document description"
-              value={editDescription}
-              onChange={(e) => setEditDescription(e.target.value)}
-            />
-
-            <div className="modal-actions">
-              <button className="btn secondary" onClick={closeEditModal}>
-                Cancel
-              </button>
-              <button className="btn" onClick={handleSaveEdit}>
-                Save
               </button>
             </div>
           </div>

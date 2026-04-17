@@ -1,65 +1,28 @@
+<<<<<<< Updated upstream:my-app/src/pages/Users.jsx
 import { useState } from "react";
 import CustomSelect from "../components/CustomSelect";
+=======
+import { useEffect, useState } from "react";
+import CustomSelect from "../../components/CustomSelect";
+>>>>>>> Stashed changes:my-app/src/pages/layout/Users.jsx
 import "./Users.css";
 
 export default function Users() {
     const [search, setSearch] = useState("");
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [pageError, setPageError] = useState("");
+
     const [showViewModal, setShowViewModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
 
-    const [users, setUsers] = useState([
-        {
-            id: 1,
-            username: "admin",
-            email: "admin@email.com",
-            role: "ADMIN",
-            createdAt: "2026-04-14",
-        },
-        {
-            id: 2,
-            username: "author1",
-            email: "author1@email.com",
-            role: "AUTHOR",
-            createdAt: "2026-04-13",
-        },
-        {
-            id: 3,
-            username: "reviewer1",
-            email: "reviewer1@email.com",
-            role: "REVIEWER",
-            createdAt: "2026-04-12",
-        },
-        {
-            id: 4,
-            username: "reader1",
-            email: "reader1@email.com",
-            role: "READER",
-            createdAt: "2026-04-11",
-        },
-    ]);
-
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [createUsername, setCreateUsername] = useState("");
-    const [createEmail, setCreateEmail] = useState("");
+    const [createPassword, setCreatePassword] = useState("");
     const [createRole, setCreateRole] = useState("READER");
     const [createError, setCreateError] = useState("");
 
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [editId, setEditId] = useState(null);
-    const [editUsername, setEditUsername] = useState("");
-    const [editEmail, setEditEmail] = useState("");
-    const [editRole, setEditRole] = useState("READER");
-    const [editError, setEditError] = useState("");
-
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [selectedUserId, setSelectedUserId] = useState(null);
-
-    const [showResetModal, setShowResetModal] = useState(false);
-    const [resetUserId, setResetUserId] = useState(null);
-    const [resetPassword, setResetPassword] = useState("");
-    const [resetConfirmPassword, setResetConfirmPassword] = useState("");
-    const [resetError, setResetError] = useState("");
-    const [resetSuccess, setResetSuccess] = useState("");
+    const currentUsername = localStorage.getItem("username") || "";
 
     const roleOptions = [
         { value: "ADMIN", label: "ADMIN" },
@@ -68,16 +31,58 @@ export default function Users() {
         { value: "READER", label: "READER" },
     ];
 
+    const loadUsers = async () => {
+        try {
+            setLoading(true);
+            setPageError("");
+
+            const response = await fetch(
+                `http://localhost:8080/api/users?requesterUsername=${encodeURIComponent(currentUsername)}`
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                setPageError(data.message || "Failed to load users.");
+                setUsers([]);
+                return;
+            }
+
+            const formatted = data.map((user) => ({
+                id: user.id,
+                username: user.username,
+                email: "-",
+                role: user.role,
+                createdAt: "-",
+            }));
+
+            setUsers(formatted);
+        } catch (error) {
+            setPageError("Cannot connect to server.");
+            setUsers([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (currentUsername) {
+            loadUsers();
+        } else {
+            setLoading(false);
+            setPageError("No logged in user found.");
+        }
+    }, []);
+
     const filteredUsers = users.filter(
         (user) =>
             user.username.toLowerCase().includes(search.toLowerCase()) ||
-            user.email.toLowerCase().includes(search.toLowerCase()) ||
             user.role.toLowerCase().includes(search.toLowerCase())
     );
 
     const openCreateModal = () => {
         setCreateUsername("");
-        setCreateEmail("");
+        setCreatePassword("");
         setCreateRole("READER");
         setCreateError("");
         setShowCreateModal(true);
@@ -86,134 +91,55 @@ export default function Users() {
     const closeCreateModal = () => {
         setShowCreateModal(false);
         setCreateUsername("");
-        setCreateEmail("");
+        setCreatePassword("");
         setCreateRole("READER");
         setCreateError("");
     };
 
-    const handleCreateUser = () => {
+    const handleCreateUser = async () => {
         if (!createUsername.trim()) {
             setCreateError("Username is required.");
             return;
         }
 
-        if (!createEmail.trim()) {
-            setCreateError("Email is required.");
+        if (!createPassword.trim()) {
+            setCreateError("Password is required.");
             return;
         }
 
-        const newUser = {
-            id: Date.now(),
-            username: createUsername.trim(),
-            email: createEmail.trim(),
-            role: createRole,
-            createdAt: new Date().toISOString().split("T")[0],
-        };
-
-        setUsers((prev) => [newUser, ...prev]);
-        closeCreateModal();
-    };
-
-    const openEditModal = (user) => {
-        setEditId(user.id);
-        setEditUsername(user.username);
-        setEditEmail(user.email);
-        setEditRole(user.role);
-        setEditError("");
-        setShowEditModal(true);
-    };
-
-    const closeEditModal = () => {
-        setShowEditModal(false);
-        setEditId(null);
-        setEditUsername("");
-        setEditEmail("");
-        setEditRole("READER");
-        setEditError("");
-    };
-
-    const handleSaveEdit = () => {
-        if (!editUsername.trim()) {
-            setEditError("Username is required.");
+        if (createPassword.length < 4) {
+            setCreateError("Password must be at least 4 characters.");
             return;
         }
 
-        if (!editEmail.trim()) {
-            setEditError("Email is required.");
-            return;
+        try {
+            const response = await fetch(
+                `http://localhost:8080/api/users?requesterUsername=${encodeURIComponent(currentUsername)}`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        username: createUsername.trim(),
+                        password: createPassword,
+                        role: createRole,
+                    }),
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                setCreateError(data.message || "Failed to create user.");
+                return;
+            }
+
+            closeCreateModal();
+            loadUsers();
+        } catch (error) {
+            setCreateError("Cannot connect to server.");
         }
-
-        setUsers((prev) =>
-            prev.map((user) =>
-                user.id === editId
-                    ? {
-                        ...user,
-                        username: editUsername.trim(),
-                        email: editEmail.trim(),
-                        role: editRole,
-                    }
-                    : user
-            )
-        );
-
-        closeEditModal();
-    };
-
-    const openDeleteModal = (id) => {
-        setSelectedUserId(id);
-        setShowDeleteModal(true);
-    };
-
-    const closeDeleteModal = () => {
-        setSelectedUserId(null);
-        setShowDeleteModal(false);
-    };
-
-    const handleDeleteUser = () => {
-        setUsers((prev) => prev.filter((user) => user.id !== selectedUserId));
-        closeDeleteModal();
-    };
-
-    const openResetModal = (id) => {
-        setResetUserId(id);
-        setResetPassword("");
-        setResetConfirmPassword("");
-        setResetError("");
-        setResetSuccess("");
-        setShowResetModal(true);
-    };
-
-    const closeResetModal = () => {
-        setResetUserId(null);
-        setResetPassword("");
-        setResetConfirmPassword("");
-        setResetError("");
-        setResetSuccess("");
-        setShowResetModal(false);
-    };
-
-    const handleResetPassword = () => {
-        if (!resetPassword.trim()) {
-            setResetError("New password is required.");
-            return;
-        }
-
-        if (resetPassword.length < 8) {
-            setResetError("Password must be at least 8 characters.");
-            return;
-        }
-
-        if (resetPassword !== resetConfirmPassword) {
-            setResetError("Passwords do not match.");
-            return;
-        }
-
-        setResetError("");
-        setResetSuccess("Password reset successfully.");
-
-        setTimeout(() => {
-            closeResetModal();
-        }, 1200);
     };
 
     const openViewModal = (user) => {
@@ -249,6 +175,8 @@ export default function Users() {
                 />
             </div>
 
+            {pageError && <div className="form-error">{pageError}</div>}
+
             <div className="users-table-wrapper">
                 <table className="users-table">
                     <thead>
@@ -262,7 +190,13 @@ export default function Users() {
                     </thead>
 
                     <tbody>
-                        {filteredUsers.length > 0 ? (
+                        {loading ? (
+                            <tr>
+                                <td colSpan="5" className="empty-row">
+                                    Loading users...
+                                </td>
+                            </tr>
+                        ) : filteredUsers.length > 0 ? (
                             filteredUsers.map((user) => (
                                 <tr key={user.id}>
                                     <td>{user.username}</td>
@@ -280,24 +214,6 @@ export default function Users() {
                                                 onClick={() => openViewModal(user)}
                                             >
                                                 View
-                                            </button>
-                                            <button
-                                                className="small-btn"
-                                                onClick={() => openEditModal(user)}
-                                            >
-                                                Edit
-                                            </button>
-                                            <button
-                                                className="small-btn reset-btn"
-                                                onClick={() => openResetModal(user.id)}
-                                            >
-                                                Reset Password
-                                            </button>
-                                            <button
-                                                className="small-btn delete"
-                                                onClick={() => openDeleteModal(user.id)}
-                                            >
-                                                Delete
                                             </button>
                                         </div>
                                     </td>
@@ -368,11 +284,11 @@ export default function Users() {
                         />
 
                         <input
-                            type="email"
+                            type="password"
                             className="modal-input"
-                            placeholder="Email"
-                            value={createEmail}
-                            onChange={(e) => setCreateEmail(e.target.value)}
+                            placeholder="Password"
+                            value={createPassword}
+                            onChange={(e) => setCreatePassword(e.target.value)}
                         />
 
                         <div className="select-spacing">
@@ -390,106 +306,6 @@ export default function Users() {
                             </button>
                             <button className="btn" onClick={handleCreateUser}>
                                 Create
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {showEditModal && (
-                <div className="modal-overlay">
-                    <div className="modal users-modal">
-                        <h3>Edit User</h3>
-                        <p>Update user information.</p>
-
-                        {editError && <div className="form-error">{editError}</div>}
-
-                        <input
-                            type="text"
-                            className="modal-input"
-                            placeholder="Username"
-                            value={editUsername}
-                            onChange={(e) => setEditUsername(e.target.value)}
-                        />
-
-                        <input
-                            type="email"
-                            className="modal-input"
-                            placeholder="Email"
-                            value={editEmail}
-                            onChange={(e) => setEditEmail(e.target.value)}
-                        />
-
-                        <div className="select-spacing">
-                            <CustomSelect
-                                value={editRole}
-                                onChange={setEditRole}
-                                placeholder="Select role"
-                                options={roleOptions}
-                            />
-                        </div>
-
-                        <div className="modal-actions">
-                            <button className="btn secondary" onClick={closeEditModal}>
-                                Cancel
-                            </button>
-                            <button className="btn" onClick={handleSaveEdit}>
-                                Save
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {showDeleteModal && (
-                <div className="modal-overlay">
-                    <div className="modal">
-                        <h3>Delete User</h3>
-                        <p>Are you sure you want to delete this user?</p>
-
-                        <div className="modal-actions">
-                            <button className="btn secondary" onClick={closeDeleteModal}>
-                                Cancel
-                            </button>
-                            <button className="btn danger" onClick={handleDeleteUser}>
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {showResetModal && (
-                <div className="modal-overlay">
-                    <div className="modal users-modal">
-                        <h3>Reset Password</h3>
-                        <p>Set a new password for this user.</p>
-
-                        {resetError && <div className="form-error">{resetError}</div>}
-                        {resetSuccess && <div className="success-box">{resetSuccess}</div>}
-
-                        <input
-                            type="password"
-                            className="modal-input"
-                            placeholder="New password"
-                            value={resetPassword}
-                            onChange={(e) => setResetPassword(e.target.value)}
-                        />
-
-                        <input
-                            type="password"
-                            className="modal-input"
-                            placeholder="Confirm new password"
-                            value={resetConfirmPassword}
-                            onChange={(e) => setResetConfirmPassword(e.target.value)}
-                        />
-
-                        <div className="modal-actions">
-                            <button className="btn secondary" onClick={closeResetModal}>
-                                Cancel
-                            </button>
-                            <button className="btn" onClick={handleResetPassword}>
-                                Reset
                             </button>
                         </div>
                     </div>

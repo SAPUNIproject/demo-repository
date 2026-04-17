@@ -6,24 +6,31 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const nav = useNavigate();
 
+<<<<<<< Updated upstream:my-app/src/pages/Login.jsx
   const passwordRegex =
     /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};:'"\\|,.<>/?]).{8,}$/;
 
   // Сложи за създаване на акоунт
   const handleLogin = () => {
     if (!username) {
+=======
+  const handleLogin = async () => {
+    if (!username.trim()) {
+>>>>>>> Stashed changes:my-app/src/pages/out/Login.jsx
       setError("Username cannot be empty");
       return;
     }
 
-    if (!password) {
+    if (!password.trim()) {
       setError("Password cannot be empty");
       return;
     }
 
+<<<<<<< Updated upstream:my-app/src/pages/Login.jsx
     if (!passwordRegex.test(password)) {
       setError(
         "Password must be at least 8 chars, include uppercase, number and symbol"
@@ -41,6 +48,40 @@ export default function Login() {
 
     setError("");
     nav("/dashboard");
+=======
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await fetch("http://localhost:8080/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          username,
+          password
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || "Login failed");
+        return;
+      }
+
+      localStorage.setItem("user", JSON.stringify(data));
+      localStorage.setItem("role", data.role);
+      localStorage.setItem("username", data.username);
+
+      nav("/dashboard");
+    } catch (err) {
+      setError("Cannot connect to server");
+    } finally {
+      setLoading(false);
+    }
+>>>>>>> Stashed changes:my-app/src/pages/out/Login.jsx
   };
 
   return (
@@ -70,8 +111,8 @@ export default function Login() {
             <label>Password</label>
           </div>
 
-          <button className="loginButton" onClick={handleLogin}>
-            Login
+          <button className="loginButton" onClick={handleLogin} disabled={loading}>
+            {loading ? "Logging in..." : "Login"}
           </button>
           
         </div>
