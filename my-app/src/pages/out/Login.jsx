@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { loginUser } from "../../services/api";
 import "./Login.css";
 
 export default function Login() {
@@ -9,26 +10,30 @@ export default function Login() {
 
   const nav = useNavigate();
 
-  const handleLogin = () => {
-    if (!username) {
-      setError("Username cannot be empty");
-      return;
+  const handleLogin = async () => {
+    try {
+      setError("");
+
+      if (!username.trim()) {
+        setError("Username is required");
+        return;
+      }
+
+      if (!password.trim()) {
+        setError("Password is required");
+        return;
+      }
+
+      const data = await loginUser(username, password);
+
+      localStorage.setItem("user", JSON.stringify(data));
+      localStorage.setItem("username", data.username);
+      localStorage.setItem("role", data.role);
+
+      nav("/dashboard");
+    } catch (err) {
+      setError(err.message);
     }
-
-    if (!password) {
-      setError("Password cannot be empty");
-      return;
-    }
-
-    if (username !== "admin" || password !== "Admin@123") {
-      setError("Invalid username or password");
-      return;
-    }
-
-    localStorage.setItem("role", "ADMIN");
-
-    setError("");
-    nav("/dashboard");
   };
 
   return (
@@ -46,7 +51,6 @@ export default function Login() {
               placeholder=" "
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              required
             />
             <label>Username</label>
           </div>
@@ -58,7 +62,6 @@ export default function Login() {
               placeholder=" "
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required
             />
             <label>Password</label>
           </div>
@@ -70,8 +73,9 @@ export default function Login() {
           <p className="login-footer">
             Don't have an account? <Link to="/signup">Sign Up</Link>
           </p>
+
           <p className="signup-footer">
-            Do you need <Link to="/help">Help</Link>?
+            Need help? <Link to="/help">Help</Link>
           </p>
         </div>
       </div>

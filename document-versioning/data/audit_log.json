@@ -7,7 +7,7 @@
   {
     "timestamp": "2026-03-20 13:57:10",
     "username": "auth",
-    "action": "Добави версия v1 към: pyrviq dokument"
+    "action": "Добави вер�?и�? v1 към: pyrviq dokument"
   },
   {
     "timestamp": "2026-03-20 13:57:29",
@@ -17,7 +17,7 @@
   {
     "timestamp": "2026-03-20 13:58:21",
     "username": "auth",
-    "action": "Добави версия v2 към: pyrviq dokument"
+    "action": "Добави вер�?и�? v2 към: pyrviq dokument"
   },
   {
     "timestamp": "2026-03-20 13:58:46",
@@ -33,5 +33,25 @@
     "timestamp": "2026-03-20 14:00:27",
     "username": "rev",
     "action": "Одобри v2 в документ abb08de2-6067-4eb8-acb1-6b45b1824e12"
+  },
+  {
+    "timestamp": "2026-04-19 20:19:08",
+    "username": "admin",
+    "action": "Restore-?? 3819ac56-e243-4d30-8a16-edae8d4a8393 ? ???????? abb08de2-6067-4eb8-acb1-6b45b1824e12"
+  },
+  {
+    "timestamp": "2026-04-19 20:19:12",
+    "username": "admin",
+    "action": "?????? 5d6fa8ef-261d-49a3-bda3-efddbacac0e6 ? ???????? abb08de2-6067-4eb8-acb1-6b45b1824e12"
+  },
+  {
+    "timestamp": "2026-04-19 20:19:20",
+    "username": "admin",
+    "action": "Restore-?? 5d6fa8ef-261d-49a3-bda3-efddbacac0e6 ? ???????? abb08de2-6067-4eb8-acb1-6b45b1824e12"
+  },
+  {
+    "timestamp": "2026-04-19 20:19:21",
+    "username": "admin",
+    "action": "???????? 5ff244c7-a4a6-4502-bf31-820f0fdbb25f ? ???????? abb08de2-6067-4eb8-acb1-6b45b1824e12"
   }
 ]
