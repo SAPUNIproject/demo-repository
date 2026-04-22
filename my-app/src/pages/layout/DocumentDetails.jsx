@@ -1,114 +1,93 @@
-import { Link, useParams } from "react-router-dom";
-import { useMemo, useState } from "react";
-import CustomSelect from "../../components/CustomSelect";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+    getDocumentById,
+    createDocumentVersion,
+    approveVersion,
+    rejectVersion,
+    restoreVersion,
+} from "../../services/api";
 import "./DocumentDetails.css";
 
 export default function DocumentDetails() {
+    const nav = useNavigate();
     const { id } = useParams();
 
-    const [documentInfo, setDocumentInfo] = useState({
-        id,
-        title: "Project Spec",
-        description: "Main project specification document",
-        author: "admin",
-        status: "Approved",
-        activeVersion: "v3",
-        createdAt: "2026-04-10",
-        updatedAt: "2026-04-14",
-    });
-
-    const [versions, setVersions] = useState([
-        {
-            id: 101,
-            versionNumber: 3,
-            title: "Project Spec v3",
-            status: "Approved",
-            author: "admin",
-            createdAt: "2026-04-14",
-            reviewComment: "Approved for release",
-            content:
-                "This is version 3 of the project specification. It contains the approved final scope, updated API contract, and release-ready requirements.",
-        },
-        {
-            id: 102,
-            versionNumber: 2,
-            title: "Project Spec v2",
-            status: "Pending Review",
-            author: "author1",
-            createdAt: "2026-04-13",
-            reviewComment: "Waiting for reviewer feedback",
-            content:
-                "This is version 2 of the project specification. It adds endpoint notes, role handling, and new dashboard requirements.",
-        },
-        {
-            id: 103,
-            versionNumber: 1,
-            title: "Project Spec v1",
-            status: "Draft",
-            author: "author1",
-            createdAt: "2026-04-12",
-            reviewComment: "Initial draft",
-            content:
-                "This is version 1 of the project specification. Initial draft with core module ideas and basic document flow.",
-        },
-    ]);
+    const [documentData, setDocumentData] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     const [showVersionModal, setShowVersionModal] = useState(false);
-    const [versionTitle, setVersionTitle] = useState("");
-    const [versionComment, setVersionComment] = useState("");
-    const [versionError, setVersionError] = useState("");
-
     const [showViewModal, setShowViewModal] = useState(false);
-    const [selectedVersion, setSelectedVersion] = useState(null);
-
     const [showCompareModal, setShowCompareModal] = useState(false);
-    const [compareFirstId, setCompareFirstId] = useState("");
-    const [compareSecondId, setCompareSecondId] = useState("");
-    const [compareError, setCompareError] = useState("");
 
-    const openVersionModal = () => {
-        const maxVersion =
-            versions.length > 0
-                ? Math.max(...versions.map((v) => v.versionNumber))
-                : 0;
+    const [selectedVersion, setSelectedVersion] = useState(null);
+    const [compareLeftId, setCompareLeftId] = useState("");
+    const [compareRightId, setCompareRightId] = useState("");
 
-        setVersionTitle(`${documentInfo.title} v${maxVersion + 1}`);
-        setVersionComment("");
-        setVersionError("");
-        setShowVersionModal(true);
-    };
+    const [newContent, setNewContent] = useState("");
+    const [newComment, setNewComment] = useState("");
+    const [versionError, setVersionError] = useState("");
+    const [pageError, setPageError] = useState("");
 
-    const closeVersionModal = () => {
-        setShowVersionModal(false);
-        setVersionTitle("");
-        setVersionComment("");
-        setVersionError("");
-    };
+    const role = (localStorage.getItem("role") || "READER").toUpperCase();
+    const requesterUsername = localStorage.getItem("username") || "";
 
-    const handleCreateVersion = () => {
-        if (!versionTitle.trim()) {
-            setVersionError("Version title is required.");
-            return;
+    const canCreateVersion = role === "ADMIN" || role === "AUTHOR";
+    const canApproveReject = role === "ADMIN" || role === "REVIEWER";
+
+    useEffect(() => {
+        loadDocument();
+    }, [id]);
+
+    const loadDocument = async () => {
+        try {
+            setLoading(true);
+            setPageError("");
+
+            const data = await getDocumentById(id, requesterUsername);
+            setDocumentData(data);
+        } catch (err) {
+            setPageError(err.message || "Failed to load document");
+        } finally {
+            setLoading(false);
         }
+    };
 
-        const nextVersionNumber =
-            versions.length > 0
-                ? Math.max(...versions.map((v) => v.versionNumber)) + 1
-                : 1;
+    const getStatusClass = (statusValue) => {
+        const normalized = String(statusValue || "").toLowerCase();
 
-        const newVersion = {
-            id: Date.now(),
-            versionNumber: nextVersionNumber,
-            title: versionTitle.trim(),
-            status: "Draft",
-            author: "admin",
-            createdAt: new Date().toISOString().split("T")[0],
-            reviewComment: versionComment.trim() || "New version created",
-            content: `Content for ${versionTitle.trim()}`,
-        };
+        if (normalized === "approved") return "status-badge approved";
+        if (
+            normalized === "pending review" ||
+            normalized === "pending-review" ||
+            normalized === "review"
+        ) {
+            return "status-badge pending-review";
+        }
+        return "status-badge draft";
+    };
 
-        setVersions((prev) => [newVersion, ...prev]);
-        closeVersionModal();
+    const handleCreateVersion = async () => {
+        try {
+            setVersionError("");
+
+            if (!newContent.trim()) {
+                setVersionError("Content is required");
+                return;
+            }
+
+            await createDocumentVersion(id, requesterUsername, {
+                content: newContent.trim(),
+                comment: newComment.trim(),
+            });
+
+            setNewContent("");
+            setNewComment("");
+            setShowVersionModal(false);
+            await loadDocument();
+        } catch (err) {
+            setVersionError(err.message || "Failed to create version");
+        }
     };
 
     const handleViewVersion = (version) => {
@@ -116,164 +95,133 @@ export default function DocumentDetails() {
         setShowViewModal(true);
     };
 
-    const closeViewModal = () => {
-        setShowViewModal(false);
-        setSelectedVersion(null);
-    };
-
-    const handleRestoreVersion = (version) => {
-        setDocumentInfo((prev) => ({
-            ...prev,
-            status: version.status,
-            activeVersion: `v${version.versionNumber}`,
-            updatedAt: new Date().toISOString().split("T")[0],
-        }));
-    };
-
-    const handleApproveVersion = (versionId) => {
-        let approvedVersion = null;
-
-        const updatedVersions = versions.map((version) => {
-            if (version.id === versionId) {
-                approvedVersion = {
-                    ...version,
-                    status: "Approved",
-                    reviewComment: "Approved by admin",
-                };
-                return approvedVersion;
-            }
-
-            return version;
-        });
-
-        setVersions(updatedVersions);
-
-        if (approvedVersion) {
-            setDocumentInfo((prev) => ({
-                ...prev,
-                status: "Approved",
-                activeVersion: `v${approvedVersion.versionNumber}`,
-                updatedAt: new Date().toISOString().split("T")[0],
-            }));
+    const handleRestoreVersion = async (version) => {
+        try {
+            await restoreVersion(id, version.id, requesterUsername);
+            await loadDocument();
+        } catch (err) {
+            alert(err.message || "Failed to restore version");
         }
     };
 
-    const handleRejectVersion = (versionId) => {
-        const updatedVersions = versions.map((version) =>
-            version.id === versionId
-                ? {
-                    ...version,
-                    status: "Rejected",
-                    reviewComment: "Rejected by admin",
-                }
-                : version
+    const handleApprove = async (version) => {
+        try {
+            await approveVersion(id, version.id, requesterUsername);
+            await loadDocument();
+        } catch (err) {
+            alert(err.message || "Failed to approve version");
+        }
+    };
+
+    const handleReject = async (version) => {
+        try {
+            await rejectVersion(id, version.id, requesterUsername);
+            await loadDocument();
+        } catch (err) {
+            alert(err.message || "Failed to reject version");
+        }
+    };
+
+    const leftVersion = useMemo(() => {
+        return documentData?.versions?.find((v) => v.id === compareLeftId) || null;
+    }, [compareLeftId, documentData]);
+
+    const rightVersion = useMemo(() => {
+        return documentData?.versions?.find((v) => v.id === compareRightId) || null;
+    }, [compareRightId, documentData]);
+
+    if (loading) {
+        return (
+            <div className="document-details-page">
+                <div className="details-card">
+                    <h3>Loading...</h3>
+                </div>
+            </div>
         );
+    }
 
-        setVersions(updatedVersions);
-    };
+    if (pageError) {
+        return (
+            <div className="document-details-page">
+                <div className="details-card">
+                    <h3>Error</h3>
+                    <p>{pageError}</p>
+                    <button className="btn secondary" onClick={() => nav(-1)}>
+                        Back
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
-    const openCompareModal = () => {
-        setCompareFirstId("");
-        setCompareSecondId("");
-        setCompareError("");
-        setShowCompareModal(true);
-    };
-
-    const closeCompareModal = () => {
-        setShowCompareModal(false);
-        setCompareFirstId("");
-        setCompareSecondId("");
-        setCompareError("");
-    };
-
-    const firstVersion = versions.find((v) => String(v.id) === compareFirstId);
-    const secondVersion = versions.find((v) => String(v.id) === compareSecondId);
-
-    const compareResult = useMemo(() => {
-        if (!firstVersion || !secondVersion) return null;
-
-        return {
-            sameTitle: firstVersion.title === secondVersion.title,
-            sameStatus: firstVersion.status === secondVersion.status,
-            sameComment: firstVersion.reviewComment === secondVersion.reviewComment,
-            sameContent: firstVersion.content === secondVersion.content,
-        };
-    }, [firstVersion, secondVersion]);
-
-    const handleCompareVersions = () => {
-        if (!compareFirstId || !compareSecondId) {
-            setCompareError("Select two versions.");
-            return;
-        }
-
-        if (compareFirstId === compareSecondId) {
-            setCompareError("Choose two different versions.");
-            return;
-        }
-
-        setCompareError("");
-    };
-
-    const versionOptions = versions.map((version) => ({
-        value: String(version.id),
-        label: `v${version.versionNumber} - ${version.title}`,
-    }));
+    if (!documentData) {
+        return (
+            <div className="document-details-page">
+                <div className="details-card">
+                    <h3>Document not found</h3>
+                    <button className="btn secondary" onClick={() => nav(-1)}>
+                        Back
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="document-details-page">
             <div className="details-header">
                 <div>
-                    <h2>{documentInfo.title}</h2>
-                    <p>Document details and version history.</p>
+                    <button className="back-btn" onClick={() => nav(-1)}>
+                        Back
+                    </button>
+                    <h2>{documentData.title}</h2>
+                    <p>{documentData.description}</p>
                 </div>
 
                 <div className="details-actions">
-                    <Link to="/documents" className="back-btn">
-                        Back to Documents
-                    </Link>
-                    <button className="btn" onClick={openVersionModal}>
-                        New Version
+                    {canCreateVersion && (
+                        <button className="btn" onClick={() => setShowVersionModal(true)}>
+                            + New Version
+                        </button>
+                    )}
+
+                    <button className="btn secondary" onClick={() => setShowCompareModal(true)}>
+                        Compare Versions
                     </button>
                 </div>
             </div>
 
             <div className="details-grid">
                 <div className="details-card">
-                    <h3>Document Information</h3>
+                    <h3>Document Info</h3>
 
                     <div className="info-row">
-                        <span>Title</span>
-                        <strong>{documentInfo.title}</strong>
-                    </div>
-
-                    <div className="info-row">
-                        <span>Description</span>
-                        <strong>{documentInfo.description}</strong>
+                        <span>ID</span>
+                        <strong>{documentData.id}</strong>
                     </div>
 
                     <div className="info-row">
                         <span>Author</span>
-                        <strong>{documentInfo.author}</strong>
+                        <strong>{documentData.author}</strong>
+                    </div>
+
+                    <div className="info-row">
+                        <span>Current Version</span>
+                        <strong>{documentData.currentVersion}</strong>
                     </div>
 
                     <div className="info-row">
                         <span>Status</span>
-                        <strong>{documentInfo.status}</strong>
+                        <strong>
+                            <span className={getStatusClass(documentData.status)}>
+                                {documentData.status}
+                            </span>
+                        </strong>
                     </div>
 
                     <div className="info-row">
-                        <span>Active Version</span>
-                        <strong>{documentInfo.activeVersion}</strong>
-                    </div>
-
-                    <div className="info-row">
-                        <span>Created At</span>
-                        <strong>{documentInfo.createdAt}</strong>
-                    </div>
-
-                    <div className="info-row">
-                        <span>Updated At</span>
-                        <strong>{documentInfo.updatedAt}</strong>
+                        <span>Updated</span>
+                        <strong>{documentData.updatedAt}</strong>
                     </div>
                 </div>
 
@@ -281,32 +229,17 @@ export default function DocumentDetails() {
                     <h3>Quick Actions</h3>
 
                     <div className="quick-actions">
-                        <button
-                            className="btn"
-                            onClick={() => {
-                                const active = versions.find(
-                                    (v) => `v${v.versionNumber}` === documentInfo.activeVersion
-                                );
-                                if (active) handleApproveVersion(active.id);
-                            }}
-                        >
-                            Approve
-                        </button>
+                        {canCreateVersion && (
+                            <button className="btn" onClick={() => setShowVersionModal(true)}>
+                                Create Version
+                            </button>
+                        )}
 
                         <button
                             className="btn secondary"
-                            onClick={() => {
-                                const active = versions.find(
-                                    (v) => `v${v.versionNumber}` === documentInfo.activeVersion
-                                );
-                                if (active) handleRejectVersion(active.id);
-                            }}
+                            onClick={() => setShowCompareModal(true)}
                         >
-                            Reject
-                        </button>
-
-                        <button className="btn secondary" onClick={openCompareModal}>
-                            Compare Versions
+                            Compare
                         </button>
                     </div>
                 </div>
@@ -320,99 +253,118 @@ export default function DocumentDetails() {
                         <thead>
                             <tr>
                                 <th>Version</th>
-                                <th>Title</th>
                                 <th>Status</th>
                                 <th>Author</th>
-                                <th>Created At</th>
-                                <th>Review Comment</th>
+                                <th>Created</th>
+                                <th>Comment</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
 
                         <tbody>
-                            {versions.map((version) => (
-                                <tr key={version.id}>
-                                    <td>v{version.versionNumber}</td>
-                                    <td>{version.title}</td>
-                                    <td>
-                                        <span
-                                            className={`status-badge ${version.status
-                                                .toLowerCase()
-                                                .replace(" ", "-")}`}
-                                        >
-                                            {version.status}
-                                        </span>
-                                    </td>
-                                    <td>{version.author}</td>
-                                    <td>{version.createdAt}</td>
-                                    <td>{version.reviewComment}</td>
-                                    <td>
-                                        <div className="version-actions">
-                                            <button
-                                                className="small-btn"
-                                                onClick={() => handleViewVersion(version)}
-                                            >
-                                                View
-                                            </button>
+                            {documentData.versions?.length ? (
+                                documentData.versions
+                                    .slice()
+                                    .reverse()
+                                    .map((version) => (
+                                        <tr key={version.id}>
+                                            <td>{version.version}</td>
+                                            <td>
+                                                <span className={getStatusClass(version.status)}>
+                                                    {version.status}
+                                                </span>
+                                            </td>
+                                            <td>{version.author}</td>
+                                            <td>{version.createdAt}</td>
+                                            <td>{version.comment}</td>
+                                            <td>
+                                                <div className="version-actions">
+                                                    <button
+                                                        className="small-btn"
+                                                        onClick={() => handleViewVersion(version)}
+                                                    >
+                                                        View
+                                                    </button>
 
-                                            <button
-                                                className="small-btn"
-                                                onClick={() => handleRestoreVersion(version)}
-                                            >
-                                                Restore
-                                            </button>
+                                                    <button
+                                                        className="small-btn"
+                                                        onClick={() => handleRestoreVersion(version)}
+                                                    >
+                                                        Restore
+                                                    </button>
 
-                                            <button
-                                                className="small-btn approve-btn"
-                                                onClick={() => handleApproveVersion(version.id)}
-                                            >
-                                                Approve
-                                            </button>
+                                                    {canApproveReject && (
+                                                        <>
+                                                            <button
+                                                                className="small-btn approve-btn"
+                                                                onClick={() => handleApprove(version)}
+                                                            >
+                                                                Approve
+                                                            </button>
 
-                                            <button
-                                                className="small-btn reject-btn"
-                                                onClick={() => handleRejectVersion(version.id)}
-                                            >
-                                                Reject
-                                            </button>
-                                        </div>
-                                    </td>
+                                                            <button
+                                                                className="small-btn reject-btn"
+                                                                onClick={() => handleReject(version)}
+                                                            >
+                                                                Reject
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="6">No versions found</td>
                                 </tr>
-                            ))}
+                            )}
                         </tbody>
                     </table>
                 </div>
             </div>
 
             {showVersionModal && (
-                <div className="modal-overlay">
-                    <div className="modal version-modal">
+                <div
+                    className="modal-overlay"
+                    onClick={() => {
+                        setShowVersionModal(false);
+                        setVersionError("");
+                    }}
+                >
+                    <div className="modal version-modal" onClick={(e) => e.stopPropagation()}>
                         <h3>Create New Version</h3>
-                        <p>Add a new version for this document.</p>
+                        <p>Add updated content for this document</p>
 
                         {versionError && <div className="version-error">{versionError}</div>}
+
+                        <textarea
+                            className="modal-textarea"
+                            placeholder="Version content..."
+                            value={newContent}
+                            onChange={(e) => setNewContent(e.target.value)}
+                        />
 
                         <input
                             type="text"
                             className="modal-input"
-                            placeholder="Version title"
-                            value={versionTitle}
-                            onChange={(e) => setVersionTitle(e.target.value)}
-                        />
-
-                        <textarea
-                            className="modal-textarea"
-                            placeholder="Comment"
-                            value={versionComment}
-                            onChange={(e) => setVersionComment(e.target.value)}
+                            placeholder="Version comment"
+                            value={newComment}
+                            onChange={(e) => setNewComment(e.target.value)}
                         />
 
                         <div className="modal-actions">
-                            <button className="btn secondary" onClick={closeVersionModal}>
-                                Cancel
-                            </button>
                             <button className="btn" onClick={handleCreateVersion}>
-                                Create Version
+                                Save Version
+                            </button>
+                            <button
+                                className="btn secondary"
+                                onClick={() => {
+                                    setShowVersionModal(false);
+                                    setVersionError("");
+                                }}
+                            >
+                                Cancel
                             </button>
                         </div>
                     </div>
@@ -420,38 +372,53 @@ export default function DocumentDetails() {
             )}
 
             {showViewModal && selectedVersion && (
-                <div className="modal-overlay">
-                    <div className="modal version-modal view-modal">
-                        <h3>{selectedVersion.title}</h3>
-                        <p>Version details</p>
+                <div
+                    className="modal-overlay"
+                    onClick={() => {
+                        setShowViewModal(false);
+                        setSelectedVersion(null);
+                    }}
+                >
+                    <div className="modal view-modal" onClick={(e) => e.stopPropagation()}>
+                        <h3>Version Details</h3>
 
                         <div className="view-details">
                             <div className="view-row">
-                                <span>Version</span>
-                                <strong>v{selectedVersion.versionNumber}</strong>
+                                <strong>Version:</strong>
+                                <span>{selectedVersion.version}</span>
                             </div>
+
                             <div className="view-row">
-                                <span>Status</span>
-                                <strong>{selectedVersion.status}</strong>
+                                <strong>Status:</strong>
+                                <span>{selectedVersion.status}</span>
                             </div>
+
                             <div className="view-row">
-                                <span>Author</span>
-                                <strong>{selectedVersion.author}</strong>
+                                <strong>Author:</strong>
+                                <span>{selectedVersion.author}</span>
                             </div>
+
                             <div className="view-row">
-                                <span>Created</span>
-                                <strong>{selectedVersion.createdAt}</strong>
+                                <strong>Created:</strong>
+                                <span>{selectedVersion.createdAt}</span>
                             </div>
+
                             <div className="view-row">
-                                <span>Comment</span>
-                                <strong>{selectedVersion.reviewComment}</strong>
+                                <strong>Comment:</strong>
+                                <span>{selectedVersion.comment}</span>
                             </div>
                         </div>
 
                         <div className="content-preview">{selectedVersion.content}</div>
 
                         <div className="modal-actions">
-                            <button className="btn secondary" onClick={closeViewModal}>
+                            <button
+                                className="btn secondary"
+                                onClick={() => {
+                                    setShowViewModal(false);
+                                    setSelectedVersion(null);
+                                }}
+                            >
                                 Close
                             </button>
                         </div>
@@ -460,94 +427,88 @@ export default function DocumentDetails() {
             )}
 
             {showCompareModal && (
-                <div className="modal-overlay">
-                    <div className="modal compare-modal">
+                <div
+                    className="modal-overlay"
+                    onClick={() => {
+                        setShowCompareModal(false);
+                        setCompareLeftId("");
+                        setCompareRightId("");
+                    }}
+                >
+                    <div className="modal compare-modal" onClick={(e) => e.stopPropagation()}>
                         <h3>Compare Versions</h3>
-                        <p>Select two versions to compare.</p>
-
-                        {compareError && <div className="version-error">{compareError}</div>}
+                        <p>Select two versions to compare</p>
 
                         <div className="compare-selects">
-                            <CustomSelect
-                                value={compareFirstId}
-                                onChange={setCompareFirstId}
-                                placeholder="Select first version"
-                                options={versionOptions}
-                            />
+                            <select
+                                className="modal-input"
+                                value={compareLeftId}
+                                onChange={(e) => setCompareLeftId(e.target.value)}
+                            >
+                                <option value="">Select first version</option>
+                                {documentData.versions?.map((version) => (
+                                    <option key={version.id} value={version.id}>
+                                        {version.version}
+                                    </option>
+                                ))}
+                            </select>
 
-                            <CustomSelect
-                                value={compareSecondId}
-                                onChange={setCompareSecondId}
-                                placeholder="Select second version"
-                                options={versionOptions}
-                            />
+                            <select
+                                className="modal-input"
+                                value={compareRightId}
+                                onChange={(e) => setCompareRightId(e.target.value)}
+                            >
+                                <option value="">Select second version</option>
+                                {documentData.versions?.map((version) => (
+                                    <option key={version.id} value={version.id}>
+                                        {version.version}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
 
-                        <div className="modal-actions">
-                            <button className="btn secondary" onClick={closeCompareModal}>
-                                Close
-                            </button>
-                            <button className="btn" onClick={handleCompareVersions}>
-                                Compare
-                            </button>
-                        </div>
-
-                        {compareError === "" &&
-                            firstVersion &&
-                            secondVersion &&
-                            compareResult && (
-                                <div className="compare-result">
-                                    <div className="compare-columns">
-                                        <div className="compare-box">
-                                            <h4>
-                                                v{firstVersion.versionNumber} - {firstVersion.title}
-                                            </h4>
-                                            <p>
-                                                <strong>Status:</strong> {firstVersion.status}
-                                            </p>
-                                            <p>
-                                                <strong>Author:</strong> {firstVersion.author}
-                                            </p>
-                                            <p>
-                                                <strong>Comment:</strong> {firstVersion.reviewComment}
-                                            </p>
-                                            <div className="compare-content">
-                                                {firstVersion.content}
-                                            </div>
-                                        </div>
-
-                                        <div className="compare-box">
-                                            <h4>
-                                                v{secondVersion.versionNumber} - {secondVersion.title}
-                                            </h4>
-                                            <p>
-                                                <strong>Status:</strong> {secondVersion.status}
-                                            </p>
-                                            <p>
-                                                <strong>Author:</strong> {secondVersion.author}
-                                            </p>
-                                            <p>
-                                                <strong>Comment:</strong> {secondVersion.reviewComment}
-                                            </p>
-                                            <div className="compare-content">
-                                                {secondVersion.content}
-                                            </div>
-                                        </div>
+                        {leftVersion && rightVersion && (
+                            <div className="compare-result">
+                                <div className="compare-columns">
+                                    <div className="compare-box">
+                                        <h4>{leftVersion.version}</h4>
+                                        <p><strong>Status:</strong> {leftVersion.status}</p>
+                                        <p><strong>Author:</strong> {leftVersion.author}</p>
+                                        <p><strong>Comment:</strong> {leftVersion.comment}</p>
+                                        <div className="compare-content">{leftVersion.content}</div>
                                     </div>
 
-                                    <div className="compare-summary">
-                                        <h4>Summary</h4>
-                                        <p>Same title: {compareResult.sameTitle ? "Yes" : "No"}</p>
-                                        <p>Same status: {compareResult.sameStatus ? "Yes" : "No"}</p>
-                                        <p>
-                                            Same comment: {compareResult.sameComment ? "Yes" : "No"}
-                                        </p>
-                                        <p>
-                                            Same content: {compareResult.sameContent ? "Yes" : "No"}
-                                        </p>
+                                    <div className="compare-box">
+                                        <h4>{rightVersion.version}</h4>
+                                        <p><strong>Status:</strong> {rightVersion.status}</p>
+                                        <p><strong>Author:</strong> {rightVersion.author}</p>
+                                        <p><strong>Comment:</strong> {rightVersion.comment}</p>
+                                        <div className="compare-content">{rightVersion.content}</div>
                                     </div>
                                 </div>
-                            )}
+
+                                <div className="compare-summary">
+                                    <h4>Summary</h4>
+                                    <p>
+                                        Comparing <strong>{leftVersion.version}</strong> with{" "}
+                                        <strong>{rightVersion.version}</strong>.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="modal-actions">
+                            <button
+                                className="btn secondary"
+                                onClick={() => {
+                                    setShowCompareModal(false);
+                                    setCompareLeftId("");
+                                    setCompareRightId("");
+                                }}
+                            >
+                                Close
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

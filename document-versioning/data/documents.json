@@ -23,6 +23,26 @@
         "createdAt": "2026-03-20 13:58:21",
         "status": "APPROVED",
         "reviewComment": ""
+      },
+      {
+        "id": "5d6fa8ef-261d-49a3-bda3-efddbacac0e6",
+        "versionNumber": 3,
+        "content": "i sega shte dobavq tova",
+        "authorId": "815dd42c-5888-41e5-a38c-b842f6b7fc6d",
+        "authorUsername": "admin",
+        "createdAt": "2026-04-19 20:19:08",
+        "status": "APPROVED",
+        "reviewComment": "Approved by admin"
+      },
+      {
+        "id": "5ff244c7-a4a6-4502-bf31-820f0fdbb25f",
+        "versionNumber": 4,
+        "content": "i sega shte dobavq tova",
+        "authorId": "815dd42c-5888-41e5-a38c-b842f6b7fc6d",
+        "authorUsername": "admin",
+        "createdAt": "2026-04-19 20:19:20",
+        "status": "REJECTED",
+        "reviewComment": "Rejected by admin"
       }
     ]
   }

@@ -1,25 +1,35 @@
 package com.docvcs.model;
 
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
+@Entity
+@Table(name = "audit_log")
 public class AuditLogEntry {
-    private String timestamp;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private LocalDateTime timestamp;
+
     private String username;
+
+    @Column(columnDefinition = "TEXT")
     private String action;
 
     public AuditLogEntry() {}
 
     public AuditLogEntry(String username, String action) {
-        this.timestamp = LocalDateTime.now()
-                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        this.timestamp = LocalDateTime.now();
         this.username = username;
         this.action = action;
     }
 
-    public String getTimestamp() { return timestamp; }
-    public String getUsername()  { return username; }
-    public String getAction()    { return action; }
+    public Long getId()            { return id; }
+    public LocalDateTime getTimestamp() { return timestamp; }
+    public String getUsername()    { return username; }
+    public String getAction()      { return action; }
 
     @Override
     public String toString() {
