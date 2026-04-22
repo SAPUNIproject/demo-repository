@@ -4,73 +4,57 @@ import com.docvcs.auth.PasswordHasher;
 import com.docvcs.exception.AuthException;
 import com.docvcs.model.Role;
 import com.docvcs.model.User;
-import com.docvcs.storage.JsonStorage;
+import com.docvcs.repository.UserRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.UUID;
 
+@Service
 public class UserService {
-    private final JsonStorage storage;
-    private List<User> users;
 
-    public UserService(JsonStorage storage) {
-        this.storage = storage;
-        this.users = storage.loadUsers();
+    private final UserRepository userRepository;
+
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
         createDefaultAdminIfNeeded();
     }
 
     private void createDefaultAdminIfNeeded() {
-        boolean hasAdmin = users.stream()
+        boolean hasAdmin = userRepository.findAll().stream()
                 .anyMatch(u -> u.getRole() == Role.ADMIN);
 
         if (!hasAdmin) {
             User admin = new User(
-                    UUID.randomUUID().toString(),
                     "admin",
                     PasswordHasher.hash("admin123"),
                     Role.ADMIN
             );
-            users.add(admin);
-            storage.saveUsers(users);
+            userRepository.save(admin);
             System.out.println("Създаден default admin: admin / admin123");
         }
     }
 
-    /**
-     * Логин с хеширана парола. Ако потребителят още е с plaintext парола,
-     * след успешно влизане я презаписваме като хеш (lazy миграция).
-     */
     public User login(String username, String password) {
-        User user = users.stream()
-                .filter(u -> u.getUsername().equals(username))
-                .findFirst()
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new AuthException("Грешно потребителско име или парола"));
 
         if (!PasswordHasher.verify(password, user.getPassword())) {
             throw new AuthException("Грешно потребителско име или парола");
         }
 
-        // Lazy миграция: стар plaintext → хеш
         if (PasswordHasher.needsRehash(user.getPassword())) {
             user.setPassword(PasswordHasher.hash(password));
-            storage.saveUsers(users);
+            userRepository.save(user);
         }
 
         return user;
     }
 
     public User findByUsername(String username) {
-        return users.stream()
-                .filter(u -> u.getUsername().equals(username))
-                .findFirst()
+        return userRepository.findByUsername(username)
                 .orElseThrow(() -> new AuthException("Потребителят '" + username + "' не е намерен"));
     }
 
-    /**
-     * Self-registration — отворен endpoint, потребителят избира роля
-     * READER / AUTHOR / REVIEWER. ADMIN роля може да се даде само от
-     * съществуващ admin през createUser().
-     */
     public User register(String username, String password, Role role) {
         if (role == Role.ADMIN) {
             throw new AuthException("Не може да се регистрирате като ADMIN");
@@ -82,23 +66,18 @@ public class UserService {
             throw new AuthException("Паролата трябва да е поне 8 символа");
         }
 
-        boolean exists = users.stream()
-                .anyMatch(u -> u.getUsername().equals(username));
-
+        boolean exists = userRepository.findByUsername(username).isPresent();
         if (exists) {
             throw new AuthException("Потребителят '" + username + "' вече съществува");
         }
 
         User newUser = new User(
-                UUID.randomUUID().toString(),
                 username,
                 PasswordHasher.hash(password),
                 role
         );
 
-        users.add(newUser);
-        storage.saveUsers(users);
-        return newUser;
+        return userRepository.save(newUser);
     }
 
     public User createUser(String username, String password, Role role, User requester) {
@@ -106,33 +85,25 @@ public class UserService {
             throw new AuthException("Само администратор може да създава потребители");
         }
 
-        boolean exists = users.stream()
-                .anyMatch(u -> u.getUsername().equals(username));
-
+        boolean exists = userRepository.findByUsername(username).isPresent();
         if (exists) {
             throw new AuthException("Потребителят '" + username + "' вече съществува");
         }
 
         User newUser = new User(
-                UUID.randomUUID().toString(),
                 username,
                 PasswordHasher.hash(password),
                 role
         );
-
-        users.add(newUser);
-        storage.saveUsers(users);
-        return newUser;
+        return userRepository.save(newUser);
     }
-
     public List<User> getAllUsers(User requester) {
         if (requester.getRole() != Role.ADMIN) {
             throw new AuthException("Само администратор може да вижда всички потребители");
         }
-        return users;
+        return userRepository.findAll();
     }
 
     public void reload() {
-        this.users = storage.loadUsers();
     }
 }

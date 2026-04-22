@@ -29,7 +29,7 @@ public class AuthController {
             User user = userService.login(request.getUsername(), request.getPassword());
 
             LoginResponse response = new LoginResponse(
-                    user.getId(),
+                    String.valueOf(user.getId()),
                     user.getUsername(),
                     user.getRole().name()
             );
@@ -42,10 +42,6 @@ public class AuthController {
         }
     }
 
-    /**
-     * Self-registration. Връща същия формат като /login, така че frontend-ът
-     * може направо да запази потребителя в localStorage и да го прати на /dashboard.
-     */
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
         try {
@@ -67,7 +63,7 @@ public class AuthController {
             );
 
             LoginResponse response = new LoginResponse(
-                    user.getId(),
+                    String.valueOf(user.getId()),
                     user.getUsername(),
                     user.getRole().name()
             );

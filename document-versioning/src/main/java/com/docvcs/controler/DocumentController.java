@@ -79,14 +79,14 @@ public class DocumentController {
 
             if (request.getDescription() != null && !request.getDescription().isBlank()) {
                 documentService.addVersion(
-                        newDocument.getId(),
+                        String.valueOf(newDocument.getId()),
                         request.getDescription(),
                         requester,
                         "Initial version"
                 );
             }
 
-            Document updated = documentService.getDocumentById(newDocument.getId());
+            Document updated = documentService.getDocumentById(String.valueOf(newDocument.getId()));
             return ResponseEntity.status(HttpStatus.CREATED).body(toDocumentResponse(updated));
 
         } catch (AuthException e) {
@@ -193,7 +193,7 @@ public class DocumentController {
         String updatedAt = lastVersion != null ? safe(lastVersion.getCreatedAt().toString()) : "-";
 
         return new DocumentResponse(
-                doc.getId(),
+                String.valueOf(doc.getId()),
                 safe(doc.getTitle()),
                 description,
                 version,
@@ -212,7 +212,7 @@ public class DocumentController {
                 .collect(Collectors.toList());
 
         return new DocumentDetailsResponse(
-                doc.getId(),
+                String.valueOf(doc.getId()),
                 safe(doc.getTitle()),
                 lastVersion != null ? safe(lastVersion.getContent()) : "No description",
                 safe(doc.getCreatedByUsername()),
@@ -225,7 +225,7 @@ public class DocumentController {
 
     private VersionResponse toVersionResponse(Version version) {
         return new VersionResponse(
-                version.getId(),
+                String.valueOf(version.getId()),
                 "v" + version.getVersionNumber(),
                 safe(version.getContent()),
                 safe(version.getStatus().name()),

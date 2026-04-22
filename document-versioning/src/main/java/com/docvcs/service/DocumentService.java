@@ -8,20 +8,25 @@ import com.docvcs.model.Role;
 import com.docvcs.model.User;
 import com.docvcs.model.Version;
 import com.docvcs.model.VersionStatus;
-import com.docvcs.storage.JsonStorage;
+import com.docvcs.repository.DocumentRepository;
+import com.docvcs.repository.VersionRepository;
+import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
+@Service
 public class DocumentService {
-    private final JsonStorage storage;
-    private List<Document> documents;
-    private List<AuditLogEntry> auditLog;
 
-    public DocumentService(JsonStorage storage) {
-        this.storage = storage;
-        this.documents = storage.loadDocuments();
-        this.auditLog = storage.loadAuditLog();
+    private final DocumentRepository documentRepository;
+    private final VersionRepository versionRepository;
+
+    private final List<AuditLogEntry> auditLog = new ArrayList<>();
+
+    public DocumentService(DocumentRepository documentRepository,
+                           VersionRepository versionRepository) {
+        this.documentRepository = documentRepository;
+        this.versionRepository = versionRepository;
     }
 
     public Document createDocument(String title, User author) {
@@ -29,17 +34,11 @@ public class DocumentService {
             throw new AuthException("Само автор или админ може да създава документи");
         }
 
-        Document doc = new Document(
-                UUID.randomUUID().toString(),
-                title,
-                author.getUsername()
-        );
+        Document doc = new Document(title, author.getUsername());
+        Document saved = documentRepository.save(doc);
 
-        documents.add(doc);
-        storage.saveDocuments(documents);
         log(author.getUsername(), "Създаде документ: " + title);
-
-        return doc;
+        return saved;
     }
 
     public Version addVersion(String docId, String content, User author) {
@@ -55,22 +54,23 @@ public class DocumentService {
         int nextNumber = doc.getVersions().size() + 1;
 
         Version version = new Version(
-                UUID.randomUUID().toString(),
                 nextNumber,
                 content,
-                author.getId(),
+                author.getId() != null ? String.valueOf(author.getId()) : null,
                 author.getUsername()
         );
 
         version.setStatus(VersionStatus.DRAFT);
         version.setReviewComment(comment == null || comment.isBlank() ? "No comment" : comment);
+        version.setDocument(doc);
 
-        doc.addVersion(version);
-        storage.saveDocuments(documents);
+        Version savedVersion = versionRepository.save(version);
+
+        doc.getVersions().add(savedVersion);
+        documentRepository.save(doc);
 
         log(author.getUsername(), "Добави версия v" + nextNumber + " към: " + doc.getTitle());
-
-        return version;
+        return savedVersion;
     }
 
     public void submitForReview(String docId, int versionNumber, User author) {
@@ -85,7 +85,8 @@ public class DocumentService {
         }
 
         version.setStatus(VersionStatus.PENDING_REVIEW);
-        storage.saveDocuments(documents);
+        versionRepository.save(version);
+
         log(author.getUsername(), "Изпрати v" + versionNumber + " за преглед");
     }
 
@@ -104,10 +105,10 @@ public class DocumentService {
         version.setStatus(VersionStatus.APPROVED);
         version.setReviewComment("Approved by " + reviewer.getUsername());
 
-        storage.saveDocuments(documents);
-        log(reviewer.getUsername(), "Одобри " + versionId + " в документ " + docId);
+        Version saved = versionRepository.save(version);
 
-        return version;
+        log(reviewer.getUsername(), "Одобри " + versionId + " в документ " + docId);
+        return saved;
     }
 
     public void approveVersion(String docId, int versionNumber, String comment, User reviewer) {
@@ -123,7 +124,8 @@ public class DocumentService {
 
         version.setStatus(VersionStatus.APPROVED);
         version.setReviewComment(comment);
-        storage.saveDocuments(documents);
+        versionRepository.save(version);
+
         log(reviewer.getUsername(), "Одобри v" + versionNumber + " в документ " + docId);
     }
 
@@ -142,10 +144,10 @@ public class DocumentService {
         version.setStatus(VersionStatus.REJECTED);
         version.setReviewComment("Rejected by " + reviewer.getUsername());
 
-        storage.saveDocuments(documents);
-        log(reviewer.getUsername(), "Отхвърли " + versionId + " в документ " + docId);
+        Version saved = versionRepository.save(version);
 
-        return version;
+        log(reviewer.getUsername(), "Отхвърли " + versionId + " в документ " + docId);
+        return saved;
     }
 
     public void rejectVersion(String docId, int versionNumber, String comment, User reviewer) {
@@ -161,7 +163,8 @@ public class DocumentService {
 
         version.setStatus(VersionStatus.REJECTED);
         version.setReviewComment(comment);
-        storage.saveDocuments(documents);
+        versionRepository.save(version);
+
         log(reviewer.getUsername(), "Отхвърли v" + versionNumber + " в документ " + docId);
     }
 
@@ -176,22 +179,23 @@ public class DocumentService {
         int nextNumber = doc.getVersions().size() + 1;
 
         Version restored = new Version(
-                UUID.randomUUID().toString(),
                 nextNumber,
                 target.getContent(),
-                requester.getId(),
+                requester.getId() != null ? String.valueOf(requester.getId()) : null,
                 requester.getUsername()
         );
 
         restored.setStatus(VersionStatus.DRAFT);
         restored.setReviewComment("Restored from " + versionId);
+        restored.setDocument(doc);
 
-        doc.addVersion(restored);
-        storage.saveDocuments(documents);
+        Version savedRestored = versionRepository.save(restored);
+
+        doc.getVersions().add(savedRestored);
+        Document savedDoc = documentRepository.save(doc);
 
         log(requester.getUsername(), "Restore-на " + versionId + " в документ " + docId);
-
-        return doc;
+        return savedDoc;
     }
 
     public Document getDocumentById(String docId) {
@@ -230,13 +234,18 @@ public class DocumentService {
     }
 
     public List<Document> getAllDocuments() {
-        return documents;
+        return documentRepository.findAll();
     }
 
     private Document findDocumentById(String docId) {
-        return documents.stream()
-                .filter(d -> d.getId().equals(docId))
-                .findFirst()
+        Long id;
+        try {
+            id = Long.parseLong(docId);
+        } catch (NumberFormatException e) {
+            throw new DocumentException("Невалидно document ID: " + docId);
+        }
+
+        return documentRepository.findById(id)
                 .orElseThrow(() ->
                         new DocumentException("Документ с ID '" + docId + "' не е намерен"));
     }
@@ -255,7 +264,7 @@ public class DocumentService {
         Document doc = findDocumentById(docId);
 
         return doc.getVersions().stream()
-                .filter(v -> v.getId().equals(versionId))
+                .filter(v -> String.valueOf(v.getId()).equals(versionId))
                 .findFirst()
                 .orElseThrow(() ->
                         new DocumentException("Версия с ID '" + versionId + "' не е намерена"));
@@ -263,7 +272,6 @@ public class DocumentService {
 
     private void log(String username, String action) {
         auditLog.add(new AuditLogEntry(username, action));
-        storage.saveAuditLog(auditLog);
     }
 
     public List<AuditLogEntry> getAuditLog(User requester) {
@@ -274,7 +282,5 @@ public class DocumentService {
     }
 
     public void reload() {
-        this.documents = storage.loadDocuments();
-        this.auditLog = storage.loadAuditLog();
     }
 }

@@ -32,7 +32,7 @@ public class UserController {
             List<UserResponse> users = userService.getAllUsers(requester)
                     .stream()
                     .map(user -> new UserResponse(
-                            user.getId(),
+                            String.valueOf(user.getId()),
                             user.getUsername(),
                             user.getRole().name()
                     ))
@@ -63,7 +63,7 @@ public class UserController {
 
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new UserResponse(
-                            newUser.getId(),
+                            String.valueOf(newUser.getId()),
                             newUser.getUsername(),
                             newUser.getRole().name()
                     ));
