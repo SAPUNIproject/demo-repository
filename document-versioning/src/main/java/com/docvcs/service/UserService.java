@@ -1,5 +1,6 @@
 package com.docvcs.service;
 
+import com.docvcs.auth.PasswordHasher;
 import com.docvcs.exception.AuthException;
 import com.docvcs.model.Role;
 import com.docvcs.model.User;
@@ -26,7 +27,7 @@ public class UserService {
             User admin = new User(
                     UUID.randomUUID().toString(),
                     "admin",
-                    "admin123",
+                    PasswordHasher.hash("admin123"),
                     Role.ADMIN
             );
             users.add(admin);
@@ -35,12 +36,27 @@ public class UserService {
         }
     }
 
+    /**
+     * Логин с хеширана парола. Ако потребителят още е с plaintext парола,
+     * след успешно влизане я презаписваме като хеш (lazy миграция).
+     */
     public User login(String username, String password) {
-        return users.stream()
-                .filter(u -> u.getUsername().equals(username)
-                        && u.getPassword().equals(password))
+        User user = users.stream()
+                .filter(u -> u.getUsername().equals(username))
                 .findFirst()
                 .orElseThrow(() -> new AuthException("Грешно потребителско име или парола"));
+
+        if (!PasswordHasher.verify(password, user.getPassword())) {
+            throw new AuthException("Грешно потребителско име или парола");
+        }
+
+        // Lazy миграция: стар plaintext → хеш
+        if (PasswordHasher.needsRehash(user.getPassword())) {
+            user.setPassword(PasswordHasher.hash(password));
+            storage.saveUsers(users);
+        }
+
+        return user;
     }
 
     public User findByUsername(String username) {
@@ -48,6 +64,41 @@ public class UserService {
                 .filter(u -> u.getUsername().equals(username))
                 .findFirst()
                 .orElseThrow(() -> new AuthException("Потребителят '" + username + "' не е намерен"));
+    }
+
+    /**
+     * Self-registration — отворен endpoint, потребителят избира роля
+     * READER / AUTHOR / REVIEWER. ADMIN роля може да се даде само от
+     * съществуващ admin през createUser().
+     */
+    public User register(String username, String password, Role role) {
+        if (role == Role.ADMIN) {
+            throw new AuthException("Не може да се регистрирате като ADMIN");
+        }
+        if (username == null || username.isBlank()) {
+            throw new AuthException("Потребителското име е задължително");
+        }
+        if (password == null || password.length() < 8) {
+            throw new AuthException("Паролата трябва да е поне 8 символа");
+        }
+
+        boolean exists = users.stream()
+                .anyMatch(u -> u.getUsername().equals(username));
+
+        if (exists) {
+            throw new AuthException("Потребителят '" + username + "' вече съществува");
+        }
+
+        User newUser = new User(
+                UUID.randomUUID().toString(),
+                username,
+                PasswordHasher.hash(password),
+                role
+        );
+
+        users.add(newUser);
+        storage.saveUsers(users);
+        return newUser;
     }
 
     public User createUser(String username, String password, Role role, User requester) {
@@ -65,7 +116,7 @@ public class UserService {
         User newUser = new User(
                 UUID.randomUUID().toString(),
                 username,
-                password,
+                PasswordHasher.hash(password),
                 role
         );
 

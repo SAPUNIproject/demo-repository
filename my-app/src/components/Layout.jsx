@@ -5,9 +5,14 @@ import "./Layout.css";
 export default function Layout() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const role = localStorage.getItem("role");
+  const username = localStorage.getItem("username") || "";
+  const initial = username ? username[0].toUpperCase() : "?";
   const nav = useNavigate();
 
   const handleLogout = () => {
+    // Чистим всичко, което е записано при login/signup
+    localStorage.removeItem("user");
+    localStorage.removeItem("username");
     localStorage.removeItem("role");
     nav("/");
   };
@@ -34,7 +39,7 @@ export default function Layout() {
               className="profile-btn"
               onClick={() => setShowProfileMenu((prev) => !prev)}
             >
-              <div className="avatar">A</div>
+              <div className="avatar">{initial}</div>
             </button>
 
             {showProfileMenu && (

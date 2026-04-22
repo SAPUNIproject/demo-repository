@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { registerUser } from "../../services/api";
 import "./SignUp.css";
 
 export default function SignUp() {
@@ -12,11 +13,12 @@ export default function SignUp() {
     const [role, setRole] = useState("READER");
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
+    const [submitting, setSubmitting] = useState(false);
 
     const passwordRegex =
         /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};:'"\\|,.<>/?]).{8,}$/;
 
-    const handleSignUp = () => {
+    const handleSignUp = async () => {
         if (!username.trim()) {
             setError("Username cannot be empty");
             return;
@@ -44,12 +46,28 @@ export default function SignUp() {
             return;
         }
 
-        setError("");
-        setSuccess("Account created successfully!");
+        try {
+            setSubmitting(true);
+            setError("");
 
-        setTimeout(() => {
-            nav("/");
-        }, 1200);
+            const data = await registerUser(username.trim(), email.trim(), password, role);
+
+            // Същият формат като login — пазим го, за да могат page-ите
+            // да четат localStorage като преди.
+            localStorage.setItem("user", JSON.stringify(data));
+            localStorage.setItem("username", data.username);
+            localStorage.setItem("role", data.role);
+
+            setSuccess("Account created successfully!");
+
+            setTimeout(() => {
+                nav("/dashboard");
+            }, 800);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -118,8 +136,12 @@ export default function SignUp() {
                         </select>
                     </div>
 
-                    <button className="button" onClick={handleSignUp}>
-                        Sign Up
+                    <button
+                        className="button"
+                        onClick={handleSignUp}
+                        disabled={submitting}
+                    >
+                        {submitting ? "Creating..." : "Sign Up"}
                     </button>
 
                     <p className="signup-footer">

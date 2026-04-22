@@ -16,6 +16,23 @@ export async function loginUser(username, password) {
     return data;
 }
 
+// Регистрация на нов потребител. Backend-ът не приема ADMIN роля тук.
+export async function registerUser(username, email, password, role) {
+    const res = await fetch(`${API_BASE}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, password, role }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+        throw new Error(data.message || "Registration failed");
+    }
+
+    return data;
+}
+
 export async function getUsers(requesterUsername) {
     const res = await fetch(
         `http://localhost:8080/api/users?requesterUsername=${requesterUsername}`
