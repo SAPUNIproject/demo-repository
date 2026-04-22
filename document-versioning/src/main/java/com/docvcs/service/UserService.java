@@ -97,11 +97,50 @@ public class UserService {
         );
         return userRepository.save(newUser);
     }
+
     public List<User> getAllUsers(User requester) {
         if (requester.getRole() != Role.ADMIN) {
             throw new AuthException("Само администратор може да вижда всички потребители");
         }
         return userRepository.findAll();
+    }
+
+    // ===== НОВИ МЕТОДИ =====
+
+    public void deleteUser(Long id, User requester) {
+        if (requester.getRole() != Role.ADMIN) {
+            throw new AuthException("Само администратор може да изтрива потребители");
+        }
+
+        User userToDelete = userRepository.findById(id)
+                .orElseThrow(() -> new AuthException("Потребителят не е намерен"));
+
+        if (userToDelete.getRole() == Role.ADMIN &&
+                userToDelete.getUsername().equalsIgnoreCase("admin")) {
+            throw new AuthException("Default admin не може да бъде изтрит");
+        }
+
+        if (userToDelete.getId().equals(requester.getId())) {
+            throw new AuthException("Не може да изтриете собствения си акаунт");
+        }
+
+        userRepository.delete(userToDelete);
+    }
+
+    public void changeRole(Long id, Role role, User requester) {
+        if (requester.getRole() != Role.ADMIN) {
+            throw new AuthException("Само администратор може да променя роли");
+        }
+
+        User userToUpdate = userRepository.findById(id)
+                .orElseThrow(() -> new AuthException("Потребителят не е намерен"));
+
+        if (userToUpdate.getId().equals(requester.getId())) {
+            throw new AuthException("Не може да промените собствената си роля");
+        }
+
+        userToUpdate.setRole(role);
+        userRepository.save(userToUpdate);
     }
 
     public void reload() {

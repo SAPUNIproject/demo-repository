@@ -95,6 +95,25 @@ public class DocumentController {
         }
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteDocument(
+            @PathVariable Long id,
+            @RequestParam String requesterUsername
+    ) {
+        try {
+            User requester = userService.findByUsername(requesterUsername);
+            documentService.deleteDocument(id, requester);
+            return ResponseEntity.ok().build();
+
+        } catch (AuthException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse(e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
     @PostMapping("/{documentId}/versions")
     public ResponseEntity<?> createVersion(
             @PathVariable String documentId,

@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getDocuments, createDocument } from "../../services/api";
+import {
+  getDocuments,
+  createDocument,
+  deleteDocument,
+} from "../../services/api";
 import "./Documents.css";
 
 export default function Documents() {
@@ -10,6 +14,10 @@ export default function Documents() {
   const [search, setSearch] = useState("");
 
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const [selectedDocument, setSelectedDocument] = useState(null);
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
@@ -20,6 +28,7 @@ export default function Documents() {
 
   const loadDocuments = async () => {
     try {
+      setError("");
       const requesterUsername = localStorage.getItem("username");
       const data = await getDocuments(requesterUsername);
       setDocuments(data);
@@ -57,14 +66,29 @@ export default function Documents() {
     nav(`/documents/${document.id}`);
   };
 
-  const handleEdit = (document) => {
-    alert(`Edit for "${document.title}" is not connected to backend yet.`);
+  const openDeleteModal = (document) => {
+    setSelectedDocument(document);
+    setError("");
+    setShowDeleteModal(true);
   };
 
-  const handleDelete = (document) => {
-    const confirmed = window.confirm(`Delete "${document.title}"?`);
-    if (confirmed) {
-      alert(`Delete for "${document.title}" is not connected to backend yet.`);
+  const handleDelete = async () => {
+    try {
+      setError("");
+
+      if (!selectedDocument) return;
+
+      const requesterUsername = localStorage.getItem("username");
+      await deleteDocument(selectedDocument.id, requesterUsername);
+
+      setDocuments((prev) =>
+        prev.filter((doc) => String(doc.id) !== String(selectedDocument.id))
+      );
+
+      setShowDeleteModal(false);
+      setSelectedDocument(null);
+    } catch (err) {
+      setError(err.message || "Failed to delete document");
     }
   };
 
@@ -78,6 +102,7 @@ export default function Documents() {
     const normalized = String(statusValue || "").toLowerCase();
 
     if (normalized === "approved") return "status-badge approved";
+    if (normalized === "rejected") return "status-badge rejected";
     if (
       normalized === "pending review" ||
       normalized === "pending-review" ||
@@ -86,6 +111,19 @@ export default function Documents() {
       return "status-badge pending-review";
     }
     return "status-badge draft";
+  };
+
+  const closeCreateModal = () => {
+    setShowCreateModal(false);
+    setError("");
+    setTitle("");
+    setDescription("");
+  };
+
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setSelectedDocument(null);
+    setError("");
   };
 
   return (
@@ -112,6 +150,12 @@ export default function Documents() {
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
+
+      {error && (
+        <div className="create-error" style={{ marginBottom: "16px" }}>
+          {error}
+        </div>
+      )}
 
       <div className="documents-table-wrapper">
         <table className="documents-table">
@@ -144,22 +188,15 @@ export default function Documents() {
                   <td>
                     <div className="table-actions">
                       <button
-                        className="small-btn"
+                        className="small-btn view"
                         onClick={() => handleView(document)}
                       >
                         View
                       </button>
 
                       <button
-                        className="small-btn"
-                        onClick={() => handleEdit(document)}
-                      >
-                        Edit
-                      </button>
-
-                      <button
                         className="small-btn delete"
-                        onClick={() => handleDelete(document)}
+                        onClick={() => openDeleteModal(document)}
                       >
                         Delete
                       </button>
@@ -179,13 +216,7 @@ export default function Documents() {
       </div>
 
       {showCreateModal && (
-        <div
-          className="modal-overlay"
-          onClick={() => {
-            setShowCreateModal(false);
-            setError("");
-          }}
-        >
+        <div className="modal-overlay" onClick={closeCreateModal}>
           <div className="modal create-modal" onClick={(e) => e.stopPropagation()}>
             <h3>Create Document</h3>
             <p>Add a new document to the system</p>
@@ -211,13 +242,31 @@ export default function Documents() {
               <button className="btn" onClick={handleCreateDocument}>
                 Create
               </button>
-              <button
-                className="btn secondary"
-                onClick={() => {
-                  setShowCreateModal(false);
-                  setError("");
-                }}
-              >
+              <button className="btn secondary" onClick={closeCreateModal}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteModal && selectedDocument && (
+        <div className="modal-overlay" onClick={closeDeleteModal}>
+          <div className="modal delete-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Delete Document</h3>
+            <p>
+              Delete <b>{selectedDocument.title}</b>?
+            </p>
+
+            <div className="delete-warning">
+              This action cannot be undone.
+            </div>
+
+            <div className="delete-actions">
+              <button className="btn delete-confirm" onClick={handleDelete}>
+                Delete
+              </button>
+              <button className="btn secondary" onClick={closeDeleteModal}>
                 Cancel
               </button>
             </div>

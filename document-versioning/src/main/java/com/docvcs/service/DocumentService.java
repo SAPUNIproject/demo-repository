@@ -198,6 +198,18 @@ public class DocumentService {
         return savedDoc;
     }
 
+    public void deleteDocument(Long id, User requester) {
+        Document document = documentRepository.findById(id)
+                .orElseThrow(() -> new AuthException("Документът не е намерен"));
+
+        if (requester.getRole() != Role.ADMIN) {
+            throw new AuthException("Само администратор може да трие документи");
+        }
+
+        documentRepository.delete(document);
+        log(requester.getUsername(), "Изтри документ: " + document.getTitle());
+    }
+
     public Document getDocumentById(String docId) {
         return findDocumentById(docId);
     }

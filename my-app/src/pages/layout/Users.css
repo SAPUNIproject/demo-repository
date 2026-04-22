@@ -290,3 +290,73 @@ select.modal-input:focus {
     border-color: rgba(56, 189, 248, 0.7);
     box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
 }
+
+/* DELETE MODAL ANIMATION */
+.delete-modal {
+    animation: scaleIn 0.2s ease;
+}
+
+/* OVERLAY FADE */
+.modal-overlay {
+    animation: fadeIn 0.2s ease;
+}
+
+/* HOVER за cancel */
+.delete-actions .btn.secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* ICON spacing ако ползваш иконки */
+.delete-actions i {
+    margin-right: 6px;
+}
+
+/* ANIMATIONS */
+@keyframes scaleIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.small-btn.view {
+    background: rgba(59, 130, 246, 0.22);
+    color: #93c5fd;
+}
+
+.small-btn.view:hover {
+    background: rgba(59, 130, 246, 0.34);
+}
+
+.small-btn.edit {
+    background: rgba(37, 99, 235, 0.22);
+    color: #bfdbfe;
+}
+
+.small-btn.edit:hover {
+    background: rgba(37, 99, 235, 0.34);
+}
+
+.small-btn.delete {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+}
+
+.small-btn.delete:hover {
+    background: rgba(239, 68, 68, 0.35);
+}

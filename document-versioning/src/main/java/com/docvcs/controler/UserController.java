@@ -79,6 +79,43 @@ public class UserController {
         }
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(
+            @PathVariable Long id,
+            @RequestParam String requesterUsername
+    ) {
+        try {
+            User requester = userService.findByUsername(requesterUsername);
+            userService.deleteUser(id, requester);
+            return ResponseEntity.ok().build();
+        } catch (AuthException e) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{id}/role")
+    public ResponseEntity<?> changeRole(
+            @PathVariable Long id,
+            @RequestParam String role,
+            @RequestParam String requesterUsername
+    ) {
+        try {
+            User requester = userService.findByUsername(requesterUsername);
+            userService.changeRole(id, Role.valueOf(role), requester);
+            return ResponseEntity.ok().build();
+        } catch (AuthException e) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(new ErrorResponse(e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse("Invalid role"));
+        }
+    }
+
     public static class UserResponse {
         private String id;
         private String username;

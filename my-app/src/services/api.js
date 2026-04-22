@@ -181,3 +181,51 @@ export async function restoreVersion(documentId, versionId, requesterUsername) {
 
     return data;
 }
+export async function deleteUser(userId, requesterUsername) {
+    const res = await fetch(
+        `${API_BASE}/users/${userId}?requesterUsername=${encodeURIComponent(requesterUsername)}`,
+        {
+            method: "DELETE",
+        }
+    );
+
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Failed to delete user");
+    }
+}
+
+export async function changeUserRole(userId, role, requesterUsername) {
+    const res = await fetch(
+        `${API_BASE}/users/${userId}/role?role=${encodeURIComponent(role)}&requesterUsername=${encodeURIComponent(requesterUsername)}`,
+        {
+            method: "PUT",
+        }
+    );
+
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Failed to update role");
+    }
+}
+
+export async function deleteDocument(documentId, requesterUsername) {
+    const res = await fetch(
+        `${API_BASE}/documents/${documentId}?requesterUsername=${encodeURIComponent(requesterUsername)}`,
+        {
+            method: "DELETE",
+        }
+    );
+
+    if (!res.ok) {
+        let message = "Failed to delete document";
+        try {
+            const data = await res.json();
+            message = data.message || message;
+        } catch {
+            const text = await res.text();
+            message = text || message;
+        }
+        throw new Error(message);
+    }
+}
