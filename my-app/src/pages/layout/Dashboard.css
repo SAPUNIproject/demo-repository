@@ -1,0 +1,79 @@
+.dashboard-page h2 {
+  margin-top: 0;
+  font-size: 28px;
+}
+
+.dashboard-page p {
+  color: rgba(226, 232, 240, 0.85);
+}
+
+/* GRID вместо flex */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 15px;
+  margin-top: 24px;
+}
+
+.stat-card {
+  padding: 20px;
+  border-radius: 14px;
+  background: rgba(0, 15, 137, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.stat-card h3 {
+  margin-top: 0;
+}
+
+.stat-card p {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 0;
+  color: #fff;
+}
+
+/* Recent docs */
+.recent-docs {
+  margin-top: 30px;
+  padding: 20px;
+  border-radius: 14px;
+  background: rgba(0, 15, 137, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.recent-docs h3 {
+  margin-top: 0;
+}
+
+/* Table */
+.recent-docs table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.recent-docs th,
+.recent-docs td {
+  padding: 10px;
+  text-align: left;
+}
+
+.recent-docs tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.recent-docs th {
+  color: rgba(226, 232, 240, 0.7);
+  font-weight: 500;
+}
+
+.stat-card {
+  transition: 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  background: rgba(0, 15, 137, 0.9);
+}

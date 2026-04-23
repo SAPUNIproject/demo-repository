@@ -1,0 +1,86 @@
+.help-page {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 60px 20px;
+
+    background:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.2), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.25), transparent 35%),
+        linear-gradient(135deg, #0f172a, #1e3a8a, #0ea5e9);
+
+    color: #e2e8f0;
+}
+
+.help-card {
+    width: 800px;
+    max-width: 100%;
+    padding: 32px;
+    border-radius: 20px;
+
+    background: rgba(0, 15, 137, 0.45);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.35),
+        0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+}
+
+.help-card h2 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.help-subtitle {
+    margin-top: 6px;
+    margin-bottom: 28px;
+    color: rgba(226, 232, 240, 0.75);
+    font-size: 14px;
+}
+
+.help-section {
+    margin-bottom: 18px;
+    padding: 18px;
+    border-radius: 14px;
+
+    background: rgba(255, 255, 255, 0.06);
+    transition: 0.2s;
+}
+
+.help-section:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.help-section h3 {
+    margin: 0 0 8px;
+    font-size: 16px;
+}
+
+.help-section p {
+    margin: 0;
+    color: rgba(226, 232, 240, 0.8);
+    line-height: 1.5;
+}
+
+
+.help-section.contact {
+    margin-top: 30px;
+
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+
+@media (max-width: 768px) {
+    .help-card {
+        padding: 24px;
+    }
+
+    .help-section {
+        padding: 14px;
+    }
+}
