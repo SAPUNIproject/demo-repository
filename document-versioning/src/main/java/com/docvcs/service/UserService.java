@@ -143,6 +143,22 @@ public class UserService {
         userRepository.save(userToUpdate);
     }
 
+    public void changePassword(Long userId, String currentPassword, String newPassword) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AuthException("Потребителят не е намерен"));
+
+        if (!PasswordHasher.verify(currentPassword, user.getPassword())) {
+            throw new AuthException("Грешна текуща парола");
+        }
+
+        if (newPassword == null || newPassword.length() < 8) {
+            throw new AuthException("Новата парола трябва да е поне 8 символа");
+        }
+
+        user.setPassword(PasswordHasher.hash(newPassword));
+        userRepository.save(user);
+    }
+
     public void reload() {
     }
 }
