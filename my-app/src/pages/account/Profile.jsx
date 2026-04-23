@@ -3,9 +3,9 @@ import "./Profile.css";
 
 export default function Profile() {
     const [avatar, setAvatar] = useState(null);
-    const [username, setUsername] = useState("admin");
-    const [email, setEmail] = useState("admin@email.com");
-    const [bio, setBio] = useState("System administrator");
+    const [username, setUsername] = useState(localStorage.getItem("username") || "");
+    const [email, setEmail] = useState("");
+    const [bio, setBio] = useState("");
     const [message, setMessage] = useState("");
 
     const fileInputRef = useRef(null);

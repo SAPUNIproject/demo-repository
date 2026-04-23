@@ -116,6 +116,22 @@ public class UserController {
         }
     }
 
+    @PutMapping("/{id}/password")
+    public ResponseEntity<?> changePassword(
+            @PathVariable Long id,
+            @RequestParam String currentPassword,
+            @RequestParam String newPassword
+    ) {
+        try {
+            userService.changePassword(id, currentPassword, newPassword);
+            return ResponseEntity.ok().build();
+        } catch (AuthException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
     public static class UserResponse {
         private String id;
         private String username;
